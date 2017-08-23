@@ -1,0 +1,22 @@
+{
+  "name": "hitchy-odem",
+  "version": "0.0.1",
+  "description": "ODM API used by hitchy framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hitchyjs/odem.git"
+  },
+  "keywords": [
+    "hitchy"
+  ],
+  "author": "cepharum GmbH",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hitchyjs/odem/issues"
+  },
+  "homepage": "https://github.com/hitchyjs/odem#readme"
+}
