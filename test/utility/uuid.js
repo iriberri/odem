@@ -63,4 +63,36 @@ suite( "UUIDv4 generator", function() {
 				result.should.be.String().and.match( /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/i );
 			} );
 	} );
+
+	test( "exposes static function isUUID() for testing whether some string is containing UUID or not.", function() {
+		Should( UuidV4.isUUID ).be.ok();
+		UuidV4.isUUID.should.be.Function().which.has.length( 1 );
+
+		( () => UuidV4.isUUID() ).should.not.throw();
+
+		UuidV4.isUUID().should.be.Boolean().which.is.false();
+		UuidV4.isUUID( null ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( undefined ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( false ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( true ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( 0 ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( 0.0 ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( -1 ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( 1.0 ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( [] ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( {} ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( { uuid: "01234567-89ab-cdef-fedc-ba9876543210" } ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( () => {} ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( () => "01234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( new Set() ).should.be.Boolean().which.is.false();
+
+		UuidV4.isUUID( "" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "1234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+
+		UuidV4.isUUID( "01234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.true();
+
+		// due to coercion:
+		UuidV4.isUUID( ["01234567-89ab-cdef-fedc-ba9876543210"] ).should.be.Boolean().which.is.true();
+	} );
+
 } );
