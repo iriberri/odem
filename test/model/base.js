@@ -31,11 +31,17 @@
 const { suite, test } = require( "mocha" );
 const Should = require( "should" );
 
-const { Model, Adapter } = require( "../../index" );
+const { Model, Adapter, MemoryAdapter } = require( "../../index" );
 
 
 suite( "Abstract Model", function() {
-	test( "is exposed in property `Adapter`", function() {
+	let memory;
+
+	suiteSetup( function() {
+		memory = new MemoryAdapter();
+	} );
+
+	test( "is exposed in property `Model`", function() {
 		Should( Model ).be.ok();
 	} );
 
@@ -43,8 +49,43 @@ suite( "Abstract Model", function() {
 		( () => new Model( "01234567-89ab-cdef-fedc-ba9876543210" ) ).should.not.throw();
 	} );
 
-	test( "requires UUID on creating instance", function() {
-		( () => new Model() ).should.throw();
+	test( "does not require UUID on creating instance", function() {
+		( () => new Model() ).should.not.throw();
+	} );
+
+	test( "supports provision of UUID on creating instance", function() {
+		( () => new Model( "12345678-9abc-def0-0fed-cba987654321" ) ).should.not.throw();
+	} );
+
+	test( "requires any UUID provided on creating instance to be valid", function() {
+		( () => new Model( "123456789abc-def0-0fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-9abcdef0-0fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-9abc-def00fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-9abc-def0-0fedcba987654321" ) ).should.throw();
+		( () => new Model( "2345678-9abc-def0-0fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-abc-def0-0fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-9abc-ef0-0fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-9abc-def0-fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-9abc-def0-0fed-ba987654321" ) ).should.throw();
+		( () => new Model( "012345678-9abc-def0-0fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-89abc-def0-0fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-9abc-cdef0-0fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-9abc-def0-00fed-cba987654321" ) ).should.throw();
+		( () => new Model( "12345678-9abc-def0-0fed-dcba987654321" ) ).should.throw();
+	} );
+
+	test( "supports provision of options in second parameter on creating instance", function() {
+		( () => new Model( "12345678-9abc-def0-0fed-cba987654321", { adapter: new MemoryAdapter() } ) ).should.not.throw();
+		( () => new Model( null, { adapter: new MemoryAdapter() } ) ).should.not.throw();
+
+		( () => new Model( { adapter: new MemoryAdapter() } ) ).should.throw();
+	} );
+
+	test( "supports provision of empty options in second parameter on creating instance", function() {
+		( () => new Model( "12345678-9abc-def0-0fed-cba987654321", {} ) ).should.not.throw();
+		( () => new Model( null, {} ) ).should.not.throw();
+
+		( () => new Model( {} ) ).should.throw();
 	} );
 
 	test( "exposes instance properties of Model API", function() {
@@ -52,10 +93,11 @@ suite( "Abstract Model", function() {
 		const instance = new Model( uuid );
 
 		instance.should.have.property( "uuid" ).which.is.a.String().and.equal( uuid );
+		instance.should.have.property( "loaded" ).which.is.null();
+		instance.should.have.property( "isNew" ).which.is.a.Boolean().which.is.false();
 		instance.should.have.property( "adapter" ).which.is.an.instanceOf( Adapter );
 		instance.should.have.property( "dataKey" ).which.is.a.String().and.not.empty();
 		instance.should.have.property( "properties" ).which.is.an.Object().and.ok();
-		instance.should.have.property( "loaded" ).which.is.a.Boolean();
 		instance.should.have.property( "exists" ).which.is.a.Promise().and.resolvedWith( false );
 	} );
 
@@ -78,45 +120,193 @@ suite( "Abstract Model", function() {
 	test( "exposes context of monitoring properties for changes", function() {
 		const instance = new Model( "01234567-89ab-cdef-fedc-ba9876543210" );
 
-		instance.properties.$context.should.be.an.Object().which.is.ok().and.has.property( "changed" ).which.is.ok().and.empty();
+		Should( instance.properties.$context ).be.an.Object().which.is.ok().and.has.property( "changed" ).which.is.ok().and.empty();
 	} );
 
-	test( "marks properties not having been loaded initially Model#loaded", function() {
-		const instance = new Model( "01234567-89ab-cdef-fdec-ba9876543210" );
+	test( "marks initially unbound instance as new", function() {
+		const instance = new Model( null );
 
-		instance.loaded.should.be.Boolean().which.is.false();
+		instance.isNew.should.be.true();
 	} );
 
-	test( "returns promise on using Model#load() reject due to using UUID of a missing item", function() {
-		const instance = new Model( "01234567-89ab-cdef-fdec-ba9876543210" );
+	test( "does not mark initially bound instance as new", function() {
+		const instance = new Model( "01234567-89ab-cdef-fedc-ba9876543210" );
 
-		return instance.load().should.be.Promise().which.is.rejected();
+		instance.isNew.should.be.false();
 	} );
 
-	test( "does not mark properties as loaded if Model#load() failed", function() {
+	test( "considers unbound instance loaded instantly, thus setting property `loaded` prior to invoking Model#load()", function() {
+		const instance = new Model();
+		const promise = instance.loaded;
+
+		Should( promise ).not.be.null();
+
+		promise.should.be.Promise().which.is.resolved();
+
+		instance.load().should.be.Promise().which.is.equal( promise );
+		instance.load().should.be.Promise().which.is.equal( promise );
+
+		return promise.should.be.resolved();
+	} );
+
+	test( "sets property `loaded` on invoking Model#load() on a bound instance", function() {
 		const instance = new Model( "01234567-89ab-cdef-fdec-ba9876543210" );
 
-		return instance.load().should.be.Promise().which.is.rejected()
+		Should( instance.loaded ).be.null();
+
+		const promise = instance.load();
+
+		return instance.loaded.should.be.Promise().which.is.equal( promise ).and.is.rejected();
+	} );
+
+	test( "rejects to load persistent data of unknown item on invoking Model#load()", function() {
+		return new Model( "01234567-89ab-cdef-fdec-ba9876543210" ).load().should.be.Promise().which.is.rejected();
+	} );
+
+	test( "succeeds to 'load' initial data of unbound instance on invoking Model#load()", function() {
+		return new Model().load().should.be.Promise().which.is.resolved();
+	} );
+
+	test( "keeps returning same eventually rejected promise on Model#load() on an instance bound to unknown item", function() {
+		const instance = new Model( "01234567-89ab-cdef-fdec-ba9876543210" );
+
+		const promise = instance.load();
+
+		instance.loaded.should.be.Promise().which.is.equal( promise );
+
+		instance.load().should.be.Promise().which.is.equal( promise );
+		instance.load().should.be.Promise().which.is.equal( promise );
+
+		return promise.should.be.rejected();
+	} );
+
+	test( "supports saving unbound instance to persistent storage using Model#save()", function() {
+		const instance = new Model( null, { adapter: memory } );
+
+		return instance.save().should.be.Promise().which.is.resolvedWith( instance );
+	} );
+
+	test( "rejects saving instance bound to unknown item to persistent storage using Model#save()", function() {
+		const instance = new Model( "01234567-89ab-cdef-fedc-ba9876543210", { adapter: memory } );
+
+		return instance.save().should.be.Promise().which.is.rejected();
+	} );
+
+	test( "exposes UUID assigned on saving unbound instance to persistent storage using Model#save()", function() {
+		const instance = new Model( null, { adapter: memory } );
+
+		Should( instance.uuid ).be.null();
+
+		return instance.save()
 			.then( () => {
-				return instance.loaded.should.be.false();
+				instance.uuid.should.be.String().which.is.not.empty();
 			} );
 	} );
 
-	test( "does not mark properties as loaded if Model#load() failed", function() {
-		const instance = new Model( "01234567-89ab-cdef-fdec-ba9876543210" );
+	test( "stops marking initially unbound instance as new after having saved to persistent storage using Model#save()", function() {
+		const instance = new Model( null, { adapter: memory } );
 
-		return instance.load().should.be.Promise().which.is.rejected()
+		instance.isNew.should.be.true();
+
+		return instance.save()
 			.then( () => {
-				return instance.loaded.should.be.false();
+				instance.isNew.should.be.false();
 			} );
 	} );
 
-	test( "detects change of properties tracking names of changed elements", function() {
-		const instance = new Model( "01234567-89ab-cdef-fdec-ba9876543210" );
 
-		return instance.load().should.be.Promise().which.is.rejected()
-			.then( () => {
-				return instance.loaded.should.be.false();
-			} );
+	suite( "bound to existing item", function() {
+		let created;
+
+		suiteSetup( function() {
+			created = new Model( null, { adapter: memory } );
+
+			return created.save();
+		} );
+
+
+		test( "saves instance bound to known item to persistent storage using Model#save()", function() {
+			const instance = new Model( created.uuid, { adapter: memory } );
+
+			return instance.save().should.be.Promise().which.is.rejected();
+		} );
+
+		test( "rejects saving instance bound to known item to persistent storage using Model#save() w/o loading first", function() {
+			const instance = new Model( created.uuid, { adapter: memory } );
+
+			return instance.load()
+				.then( () => instance.save().should.be.Promise().which.is.resolvedWith( instance ) );
+		} );
+
+		test( "clears mark on changed properties after saving to persistent storage using Model#save()", function() {
+			const instance = new Model( created.uuid, { adapter: memory } );
+
+			return instance.load()
+				.then( () => {
+					instance.properties.$context.changed.should.be.empty();
+					instance.properties.$context.hasChanged.should.be.false();
+
+					instance.properties.adjusted = "1";
+
+					instance.properties.$context.changed.should.not.be.empty();
+					instance.properties.$context.hasChanged.should.be.true();
+
+					return instance.save();
+				} )
+				.then( () => {
+					instance.properties.$context.changed.should.be.empty();
+					instance.properties.$context.hasChanged.should.be.false();
+				} );
+		} );
+
+		test( "clears mark on changed properties after loaded from persistent storage using Model#load()", function() {
+			const instance = new Model( created.uuid, { adapter: memory, onUnsaved: "ignore" } );
+
+			instance.properties.$context.changed.should.be.empty();
+			instance.properties.$context.hasChanged.should.be.false();
+
+			instance.properties.adjusted = "1";
+
+			instance.properties.$context.changed.should.not.be.empty();
+			instance.properties.$context.hasChanged.should.be.true();
+
+			return instance.load()
+				.then( () => {
+					instance.properties.$context.changed.should.be.empty();
+					instance.properties.$context.hasChanged.should.be.false();
+				} );
+		} );
+
+		test( "rejects to load after having changed properties of bound item using Model#load()", function() {
+			const instanceUnchanged = new Model( created.uuid, { adapter: memory, onUnsaved: "fail" } );
+
+			instanceUnchanged.properties.$context.changed.should.be.empty();
+			instanceUnchanged.properties.$context.hasChanged.should.be.false();
+
+			return instanceUnchanged.load().should.be.Promise().which.is.not.rejected()
+				.then( () => {
+					const instanceChanging = new Model( created.uuid, { adapter: memory, onUnsaved: "fail" } );
+
+					instanceChanging.properties.$context.changed.should.be.empty();
+					instanceChanging.properties.$context.hasChanged.should.be.false();
+
+					instanceChanging.properties.adjusted = "1";
+
+					instanceChanging.properties.$context.changed.should.not.be.empty();
+					instanceChanging.properties.$context.hasChanged.should.be.true();
+
+					return instanceChanging.load().should.be.Promise().which.is.rejected();
+				} );
+		} );
+
+
+		test( "detects change of properties tracking names of changed elements", function() {
+			const instance = new Model( "01234567-89ab-cdef-fdec-ba9876543210" );
+
+			return instance.load().should.be.Promise().which.is.rejected()
+				.then( () => {
+
+				} );
+		} );
 	} );
 } );
