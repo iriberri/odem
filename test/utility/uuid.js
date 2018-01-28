@@ -87,9 +87,32 @@ suite( "UUIDv4 generator", function() {
 		UuidV4.isUUID( new Set() ).should.be.Boolean().which.is.false();
 
 		UuidV4.isUUID( "" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567_89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab_cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdef_fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdef-fedc_ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567 89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdef fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdef-fedc ba9876543210" ).should.be.Boolean().which.is.false();
 		UuidV4.isUUID( "1234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-9ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-def-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdef-edc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdef-fedc-a9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "012345678-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89abb-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdeff-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdef-fedcc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdef-fedc-ba98765432100" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "0123456g-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ag-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cgef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdef-gedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		UuidV4.isUUID( "01234567-89ab-cdef-fedc-ga9876543210" ).should.be.Boolean().which.is.false();
 
 		UuidV4.isUUID( "01234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.true();
+		UuidV4.isUUID( "01234567-89AB-CDEF-FEDC-BA9876543210" ).should.be.Boolean().which.is.true();
 
 		// due to coercion:
 		UuidV4.isUUID( ["01234567-89ab-cdef-fedc-ba9876543210"] ).should.be.Boolean().which.is.true();
