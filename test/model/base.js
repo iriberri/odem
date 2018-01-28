@@ -298,15 +298,5 @@ suite( "Abstract Model", function() {
 					return instanceChanging.load().should.be.Promise().which.is.rejected();
 				} );
 		} );
-
-
-		test( "detects change of properties tracking names of changed elements", function() {
-			const instance = new Model( "01234567-89ab-cdef-fdec-ba9876543210" );
-
-			return instance.load().should.be.Promise().which.is.rejected()
-				.then( () => {
-
-				} );
-		} );
 	} );
 } );
