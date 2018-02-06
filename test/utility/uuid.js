@@ -31,32 +31,32 @@
 const { suite, test } = require( "mocha" );
 const Should = require( "should" );
 
-const { UuidV4 } = require( "../../lib/utility" );
+const { Uuid } = require( "../../lib/utility" );
 
 
 suite( "UUIDv4 generator", function() {
 	test( "is exposed properly", function() {
-		Should( UuidV4 ).be.ok();
+		Should( Uuid ).be.ok();
 	} );
 
 	test( "is a function", function() {
-		UuidV4.should.be.Function().which.has.length( 0 );
+		Uuid.should.be.Function().which.has.length( 0 );
 	} );
 
 	test( "does not throw", function() {
 		let result;
 
-		( () => ( result = UuidV4() ) ).should.not.throw();
+		( () => ( result = Uuid() ) ).should.not.throw();
 
 		return result;
 	} );
 
 	test( "returns a promise", function() {
-		return UuidV4().should.be.Promise().which.is.resolved();
+		return Uuid().should.be.Promise().which.is.resolved();
 	} );
 
-	test( "promises string containing UUIDv4 in commonly expected format", function() {
-		return UuidV4()
+	test( "promises string containing Uuid in commonly expected format", function() {
+		return Uuid()
 			.then( result => {
 				Should( result ).be.ok();
 
@@ -65,57 +65,57 @@ suite( "UUIDv4 generator", function() {
 	} );
 
 	test( "exposes static function isUUID() for testing whether some string is containing UUID or not.", function() {
-		Should( UuidV4.isUUID ).be.ok();
-		UuidV4.isUUID.should.be.Function().which.has.length( 1 );
+		Should( Uuid.isUUID ).be.ok();
+		Uuid.isUUID.should.be.Function().which.has.length( 1 );
 
-		( () => UuidV4.isUUID() ).should.not.throw();
+		( () => Uuid.isUUID() ).should.not.throw();
 
-		UuidV4.isUUID().should.be.Boolean().which.is.false();
-		UuidV4.isUUID( null ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( undefined ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( false ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( true ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( 0 ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( 0.0 ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( -1 ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( 1.0 ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( [] ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( {} ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( { uuid: "01234567-89ab-cdef-fedc-ba9876543210" } ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( () => {} ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( () => "01234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( new Set() ).should.be.Boolean().which.is.false();
+		Uuid.isUUID().should.be.Boolean().which.is.false();
+		Uuid.isUUID( null ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( undefined ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( false ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( true ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( 0 ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( 0.0 ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( -1 ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( 1.0 ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( [] ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( {} ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( { uuid: "01234567-89ab-cdef-fedc-ba9876543210" } ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( () => {} ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( () => "01234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( new Set() ).should.be.Boolean().which.is.false();
 
-		UuidV4.isUUID( "" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567_89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab_cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdef_fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdef-fedc_ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567 89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdef fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdef-fedc ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "1234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-9ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-def-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdef-edc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdef-fedc-a9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "012345678-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89abb-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdeff-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdef-fedcc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdef-fedc-ba98765432100" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "0123456g-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ag-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cgef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdef-gedc-ba9876543210" ).should.be.Boolean().which.is.false();
-		UuidV4.isUUID( "01234567-89ab-cdef-fedc-ga9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567_89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab_cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdef_fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdef-fedc_ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567 89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdef fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdef-fedc ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "1234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-9ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-def-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdef-edc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdef-fedc-a9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "012345678-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89abb-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdeff-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdef-fedcc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdef-fedc-ba98765432100" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "0123456g-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ag-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cgef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdef-gedc-ba9876543210" ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( "01234567-89ab-cdef-fedc-ga9876543210" ).should.be.Boolean().which.is.false();
 
-		UuidV4.isUUID( "01234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.true();
-		UuidV4.isUUID( "01234567-89AB-CDEF-FEDC-BA9876543210" ).should.be.Boolean().which.is.true();
+		Uuid.isUUID( "01234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.true();
+		Uuid.isUUID( "01234567-89AB-CDEF-FEDC-BA9876543210" ).should.be.Boolean().which.is.true();
 
 		// due to coercion:
-		UuidV4.isUUID( ["01234567-89ab-cdef-fedc-ba9876543210"] ).should.be.Boolean().which.is.true();
+		Uuid.isUUID( ["01234567-89ab-cdef-fedc-ba9876543210"] ).should.be.Boolean().which.is.true();
 	} );
 
 } );
