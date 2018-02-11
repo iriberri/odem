@@ -1,38 +1,39 @@
 {
-	"name": "hitchy-odem",
-	"version": "0.0.1",
-	"description": "ODM API used by hitchy framework",
-	"main": "index.js",
-	"scripts": {
-		"test": "set NODE_ENV=test && mocha --ui=tdd test/**/*.js",
-		"style": "eslint ."
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/hitchyjs/odem.git"
-	},
-	"keywords": [
-		"hitchy"
-	],
-	"author": "cepharum GmbH",
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/hitchyjs/odem/issues"
-	},
-	"homepage": "https://github.com/hitchyjs/odem#readme",
-	"devDependencies": {
-		"eslint": "^4.10.0",
-		"eslint-config-cepharum": "^1.0.2",
-		"eslint-config-standard": "^10.2.1",
-		"eslint-plugin-import": "^2.8.0",
-		"eslint-plugin-node": "^5.2.1",
-		"eslint-plugin-promise": "^3.6.0",
-		"eslint-plugin-standard": "^3.0.1",
-		"mocha": "^4.0.1",
-		"should": "^13.1.3"
-	},
-	"dependencies": {
-		"file-essentials": "0.*",
-		"object-monitor": "0.*"
-	}
+  "name": "hitchy-odem",
+  "version": "0.0.1",
+  "description": "ODM API used by hitchy framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "set NODE_ENV=test && mocha --ui=tdd test/**/*.js",
+    "style": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hitchyjs/odem.git"
+  },
+  "keywords": [
+    "hitchy"
+  ],
+  "author": "cepharum GmbH",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hitchyjs/odem/issues"
+  },
+  "homepage": "https://github.com/hitchyjs/odem#readme",
+  "devDependencies": {
+    "eslint": "^4.10.0",
+    "eslint-config-cepharum": "^1.0.2",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "mocha": "^4.0.1",
+    "should": "^13.1.3"
+  },
+  "dependencies": {
+    "file-essentials": "0.*",
+    "object-monitor": "0.*",
+    "promise-essentials": "0.0.8"
+  }
 }
