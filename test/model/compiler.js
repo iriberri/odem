@@ -49,7 +49,7 @@ suite( "Model compiler", function() {
 
 		Compiler._utility.should.have.property( "splitSchemaElements" ).which.is.a.Function();
 		Compiler._utility.should.have.property( "validateAttributes" ).which.is.a.Function();
-		Compiler._utility.should.have.property( "compileValidator" ).which.is.a.Function();
+		Compiler._utility.should.have.property( "compileSerializer" ).which.is.a.Function();
 	} );
 
 	suite( "contains internal method for splitting schema elements which", function() {
@@ -324,7 +324,7 @@ suite( "Model compiler", function() {
 			( () => compileValidator( { name: { type: "int" } } ) ).should.not.throw();
 		} );
 
-		test( "returns a function (expecting valid and qualified definition of attributes in first argument)", function() {
+		test( "returns a function", function() {
 			const validator = compileValidator( {} );
 
 			validator.should.be.Function().which.has.length( 1 );
@@ -352,6 +352,183 @@ suite( "Model compiler", function() {
 			validator.bind( { properties: {} } ).should.throw();
 			validator.bind( { properties: {} }, definition ).should.not.throw();
 			validator.bind( { properties: {} }, definition )().should.be.Array();
+		} );
+	} );
+
+	suite( "contains internal method for compiling code serializing all attributes of model in a row which", function() {
+		const { compileSerializer } = Compiler._utility;
+
+		test( "requires provision of apparently valid and qualified definition of attributes in first argument", function() {
+			( () => compileSerializer() ).should.throw();
+			( () => compileSerializer( undefined ) ).should.throw();
+			( () => compileSerializer( null ) ).should.throw();
+			( () => compileSerializer( false ) ).should.throw();
+			( () => compileSerializer( true ) ).should.throw();
+			( () => compileSerializer( 0 ) ).should.throw();
+			( () => compileSerializer( 4.5 ) ).should.throw();
+			( () => compileSerializer( -3000 ) ).should.throw();
+			( () => compileSerializer( [] ) ).should.throw();
+			( () => compileSerializer( ["name"] ) ).should.throw();
+			( () => compileSerializer( () => "name" ) ).should.throw();
+			( () => compileSerializer( "" ) ).should.throw();
+			( () => compileSerializer( "name" ) ).should.throw();
+			( () => compileSerializer( { name: "name" } ) ).should.throw();
+			( () => compileSerializer( { name: {} } ) ).should.throw(); // due to the lack of property `type`
+
+			( () => compileSerializer( {} ) ).should.not.throw();
+			( () => compileSerializer( { name: { type: "int" } } ) ).should.not.throw();
+		} );
+
+		test( "returns a function which isn't expecting arguments", function() {
+			const serializer = compileSerializer( {} );
+
+			serializer.should.be.Function().which.has.length( 0 );
+		} );
+
+		test( "returns empty function instantly invocable w/o any particular context", function() {
+			const serializer = compileSerializer( {} );
+
+			serializer.should.not.throw();
+		} );
+
+		test( "returns empty function returning empty object of serialized values on invocation", function() {
+			const serializer = compileSerializer( {} );
+
+			serializer().should.be.Object().which.is.empty();
+		} );
+
+		test( "returns non-empty function on non-empty definition which is throwing on invocation w/o context similar to Model instance", function() {
+			const definition = { name: { type: "string" }, age: { type: "int" } };
+			const serializer = compileSerializer( definition );
+
+			serializer.should.be.Function().which.has.length( 0 );
+			serializer.should.throw();
+
+			serializer.bind( { properties: {} } ).should.not.throw();
+			serializer.bind( { properties: {} } )().should.be.Object().which.has.size( 2 );
+		} );
+
+		test( "returns non-empty function on non-empty definition returning object with serialized value of every defined attribute", function() {
+			let serializer = compileSerializer( { name: { type: "string" } } );
+
+			serializer.should.be.Function().which.has.length( 0 );
+			serializer.should.throw();
+
+			let serialized = serializer.bind( { properties: { name: "John Doe", age: 42 } } )();
+			serialized.should.be.Object().which.has.size( 1 );
+			serialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
+
+
+			serializer = compileSerializer( { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } } );
+
+			serialized = serializer.bind( { properties: { name: "John Doe", age: 42, active: true } } )();
+			serialized.should.be.Object().which.has.size( 3 );
+			serialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
+			serialized.should.have.ownProperty( "age" ).which.is.equal( 42 );
+			serialized.should.have.ownProperty( "active" ).which.is.equal( 1 );
+		} );
+
+		test( "returns non-empty function on non-empty definition returning serialized form of all defined attributes including those w/o value", function() {
+			const serializer = compileSerializer( { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } } );
+
+			const serialized = serializer.bind( { properties: {} } )();
+			serialized.should.be.Object().which.has.size( 3 );
+			serialized.should.have.ownProperty( "name" ).which.is.null();
+			serialized.should.have.ownProperty( "age" ).which.is.null();
+			serialized.should.have.ownProperty( "active" ).which.is.null();
+		} );
+	} );
+
+	suite( "contains internal method for compiling code deserializing all attributes of model in a row which", function() {
+		const { compileDeserializer } = Compiler._utility;
+
+		test( "requires provision of apparently valid and qualified definition of attributes in first argument", function() {
+			( () => compileDeserializer() ).should.throw();
+			( () => compileDeserializer( undefined ) ).should.throw();
+			( () => compileDeserializer( null ) ).should.throw();
+			( () => compileDeserializer( false ) ).should.throw();
+			( () => compileDeserializer( true ) ).should.throw();
+			( () => compileDeserializer( 0 ) ).should.throw();
+			( () => compileDeserializer( 4.5 ) ).should.throw();
+			( () => compileDeserializer( -3000 ) ).should.throw();
+			( () => compileDeserializer( [] ) ).should.throw();
+			( () => compileDeserializer( ["name"] ) ).should.throw();
+			( () => compileDeserializer( () => "name" ) ).should.throw();
+			( () => compileDeserializer( "" ) ).should.throw();
+			( () => compileDeserializer( "name" ) ).should.throw();
+			( () => compileDeserializer( { name: "name" } ) ).should.throw();
+			( () => compileDeserializer( { name: {} } ) ).should.throw(); // due to the lack of property `type`
+
+			( () => compileDeserializer( {} ) ).should.not.throw();
+			( () => compileDeserializer( { name: { type: "int" } } ) ).should.not.throw();
+		} );
+
+		test( "returns a function which isn't expecting arguments", function() {
+			const deserializer = compileDeserializer( {} );
+
+			deserializer.should.be.Function().which.has.length( 0 );
+		} );
+
+		test( "returns empty function instantly invocable w/o any particular context", function() {
+			const deserializer = compileDeserializer( {} );
+
+			deserializer.should.not.throw();
+		} );
+
+		test( "returns empty function returning empty object of serialized values on invocation", function() {
+			const deserializer = compileDeserializer( {} );
+
+			deserializer().should.be.Object().which.is.empty();
+		} );
+
+		test( "returns non-empty function on non-empty definition which is throwing on invocation w/o context similar to Model instance", function() {
+			const definition = { name: { type: "string" }, age: { type: "int" } };
+			const deserializer = compileDeserializer( definition );
+
+			deserializer.should.be.Function().which.has.length( 0 );
+			deserializer.should.throw();
+
+			deserializer.bind( { properties: {} } ).should.not.throw();
+			deserializer.bind( { properties: {} } )().should.be.Object().which.has.size( 2 );
+		} );
+
+		test( "returns non-empty function on non-empty definition returning object with deserialized value of every defined attribute", function() {
+			let deserializer = compileDeserializer( { name: { type: "string" } } );
+
+			deserializer.should.be.Function().which.has.length( 0 );
+			deserializer.should.throw();
+
+			let deserialized = deserializer.bind( { properties: { name: "John Doe", age: 42 } } )();
+			deserialized.should.be.Object().which.has.size( 1 );
+			deserialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
+
+
+			deserializer = compileDeserializer( { name: { type: "string" }, age: { type: "int" } } );
+
+			deserialized = deserializer.bind( { properties: { name: "John Doe", age: 42 } } )();
+			deserialized.should.be.Object().which.has.size( 2 );
+			deserialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
+			deserialized.should.have.ownProperty( "age" ).which.is.equal( 42 );
+		} );
+
+		test( "returns function deserializing attribute's values coping w/ missing information in serialized data", function() {
+			const deserializer = compileDeserializer( { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } } );
+
+			const deserialized = deserializer.bind( { properties: {} } )();
+			deserialized.should.be.Object().which.has.size( 3 );
+			deserialized.should.have.ownProperty( "name" ).which.is.null();
+			deserialized.should.have.ownProperty( "age" ).which.is.null();
+			deserialized.should.have.ownProperty( "active" ).which.is.null();
+		} );
+
+		test( "returns function deserializing attribute's values coping w/ information in serialized data mismatching type of attribute", function() {
+			const deserializer = compileDeserializer( { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } } );
+
+			const deserialized = deserializer.bind( { properties: { name: 12345, age: "54321", active: "" } } )();
+			deserialized.should.be.Object().which.has.size( 3 );
+			deserialized.should.have.ownProperty( "name" ).which.is.equal( "12345" );
+			deserialized.should.have.ownProperty( "age" ).which.is.equal( 54321 );
+			deserialized.should.have.ownProperty( "active" ).which.is.false();
 		} );
 	} );
 } );
