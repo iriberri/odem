@@ -73,12 +73,12 @@ suite( "Utility API for processing functions", function() {
 
 		test( "returns sorted list of names of all arguments of provided function", function() {
 			FN.extractBody( function() {} ).args.should.be.an.Array().which.has.length( 0 );
-			FN.extractBody( function( a ) {} ).args.should.be.an.Array().which.is.containEql( "a" ).and.has.length( 1 );
-			FN.extractBody( function( first, second ) {} ).args.should.be.an.Array().which.is.eql( ["first", "second"] ).and.has.length( 2 );
+			FN.extractBody( function( a ) {} ).args.should.be.an.Array().which.is.containEql( "a" ).and.has.length( 1 ); // eslint-disable-line no-unused-vars
+			FN.extractBody( function( first, second ) {} ).args.should.be.an.Array().which.is.eql( [ "first", "second" ] ).and.has.length( 2 ); // eslint-disable-line no-unused-vars
 
 			FN.extractBody( () => {} ).args.should.be.an.Array().which.has.length( 0 );
-			FN.extractBody( ( a ) => {} ).args.should.be.an.Array().which.is.containEql( "a" ).and.has.length( 1 );
-			FN.extractBody( ( first, second ) => {} ).args.should.be.an.Array().which.is.eql( ["first", "second"] ).and.has.length( 2 );
+			FN.extractBody( ( a ) => {} ).args.should.be.an.Array().which.is.containEql( "a" ).and.has.length( 1 ); // eslint-disable-line no-unused-vars
+			FN.extractBody( ( first, second ) => {} ).args.should.be.an.Array().which.is.eql( [ "first", "second" ] ).and.has.length( 2 ); // eslint-disable-line no-unused-vars
 		} );
 
 		test( "returns body of provided function", function() {
@@ -89,9 +89,9 @@ suite( "Utility API for processing functions", function() {
 			} ).body.should.be.a.String().which.is.equal( "return a + a;" );
 			FN.extractBody( function( a ) {
 				const b = a * 2;
-				return a + a;
+				return b + a;
 			} ).body.should.be.a.String().which.is.equal( `const b = a * 2;
-				return a + a;` );
+				return b + a;` );
 
 			FN.extractBody( () => {} ).body.should.be.a.String().which.is.equal( "" );
 			FN.extractBody( ( a ) => { return a + a; } ).body.should.be.a.String().which.is.equal( "return a + a;" );
