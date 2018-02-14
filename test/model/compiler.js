@@ -496,6 +496,131 @@ suite( "Model compiler", function() {
 		} );
 	} );
 
+	suite( "contains internal method for compiling code coercing all attributes of model in a row which", function() {
+		const { compileCoercion } = Compiler._utility;
+
+		test( "requires provision of apparently valid and qualified definition of attributes in first argument", function() {
+			( () => compileCoercion() ).should.throw();
+			( () => compileCoercion( undefined ) ).should.throw();
+			( () => compileCoercion( null ) ).should.throw();
+			( () => compileCoercion( false ) ).should.throw();
+			( () => compileCoercion( true ) ).should.throw();
+			( () => compileCoercion( 0 ) ).should.throw();
+			( () => compileCoercion( 4.5 ) ).should.throw();
+			( () => compileCoercion( -3000 ) ).should.throw();
+			( () => compileCoercion( [] ) ).should.throw();
+			( () => compileCoercion( ["name"] ) ).should.throw();
+			( () => compileCoercion( () => "name" ) ).should.throw();
+			( () => compileCoercion( "" ) ).should.throw();
+			( () => compileCoercion( "name" ) ).should.throw();
+			( () => compileCoercion( { name: "name" } ) ).should.throw();
+			( () => compileCoercion( { name: {} } ) ).should.throw(); // due to the lack of property `type`
+
+			( () => compileCoercion( {} ) ).should.not.throw();
+			( () => compileCoercion( { name: { type: "int" } } ) ).should.not.throw();
+		} );
+
+		test( "returns a function requiring one argument", function() {
+			const coercer = compileCoercion( {} );
+
+			coercer.should.be.Function().which.has.length( 1 );
+		} );
+
+		test( "returns empty function instantly invocable w/o any particular context", function() {
+			const coercer = compileCoercion( {} );
+
+			coercer.should.not.throw();
+		} );
+
+		test( "returns empty function not returning anything", function() {
+			const coercer = compileCoercion( {} );
+
+			Should.not.exist( coercer( {} ) );
+		} );
+
+		test( "returns non-empty function on non-empty definition which is throwing on invocation w/o context similar to Model instance and provision of attributes' definition", function() {
+			const definition = { name: { type: "string" }, age: { type: "int" } };
+			const coercer = compileCoercion( definition );
+
+			coercer.should.be.Function().which.has.length( 1 );
+			coercer.should.throw();
+
+			coercer.bind( { properties: {} } ).should.throw();
+			coercer.bind( { properties: {} }, definition ).should.not.throw();
+		} );
+
+		test( "returns non-empty function on non-empty definition not returning anything", function() {
+			const definition = { name: { type: "string" }, age: { type: "int" } };
+			const coercer = compileCoercion( definition );
+
+			Should.not.exist( coercer.bind( { properties: {} }, definition )() );
+		} );
+
+		test( "returns non-empty function on non-empty definition adjusting properties provided as context", function() {
+			let definition = { name: { type: "string" } };
+			let coercer = compileCoercion( definition );
+
+			coercer.should.be.Function().which.has.length( 1 );
+			coercer.should.throw();
+
+			let item = { properties: { name: "John Doe", age: 42 } };
+			let coerced = coercer.bind( item, definition )();
+			Should.not.exist( coerced );
+			item.properties.should.have.size( 2 );
+			item.properties.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
+			item.properties.should.have.ownProperty( "age" ).which.is.equal( 42 );
+
+
+			definition = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
+			coercer = compileCoercion( definition );
+
+			item = { properties: { name: "John Doe", age: 42, active: true } };
+			coerced = coercer.bind( item, definition )();
+			Should.not.exist( coerced );
+			item.properties.should.have.size( 3 );
+			item.properties.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
+			item.properties.should.have.ownProperty( "age" ).which.is.equal( 42 );
+			item.properties.should.have.ownProperty( "active" ).which.is.equal( true );
+
+			item = { properties: { name: null, age: "42", active: 1 } };
+			coerced = coercer.bind( item, definition )();
+			Should.not.exist( coerced );
+			item.properties.should.have.size( 3 );
+			item.properties.should.have.ownProperty( "name" ).which.is.null();
+			item.properties.should.have.ownProperty( "age" ).which.is.equal( 42 );
+			item.properties.should.have.ownProperty( "active" ).which.is.equal( true );
+		} );
+
+		test( "returns non-empty function on non-empty definition adjusting defined properties in provided context, only", function() {
+			let definition = { name: { type: "string" } };
+			let coercer = compileCoercion( definition );
+
+			coercer.should.be.Function().which.has.length( 1 );
+			coercer.should.throw();
+
+			let item = { properties: { name: "John Doe", age: "42", active: 1 } };
+			let coerced = coercer.bind( item, definition )();
+			Should.not.exist( coerced );
+			item.properties.should.have.size( 3 );
+			item.properties.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
+			item.properties.should.have.ownProperty( "age" ).which.is.equal( "42" );
+			item.properties.should.have.ownProperty( "active" ).which.is.equal( 1 );
+		} );
+
+		test( "returns non-empty function on non-empty definition setting all defined properties `null` if unset", function() {
+			const definition = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
+			const coercer = compileCoercion( definition );
+
+			const item = { properties: {} };
+			const coerced = coercer.bind( item, definition )();
+			Should.not.exist( coerced );
+			item.properties.should.have.size( 3 );
+			item.properties.should.have.ownProperty( "name" ).which.is.null();
+			item.properties.should.have.ownProperty( "age" ).which.is.null();
+			item.properties.should.have.ownProperty( "active" ).which.is.null();
+		} );
+	} );
+
 	suite( "contains internal method for compiling code serializing all attributes of model in a row which", function() {
 		const { compileSerializer } = Compiler._utility;
 
