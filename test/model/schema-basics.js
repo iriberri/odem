@@ -1,9 +1,9 @@
 /**
- * (c) 2017 cepharum GmbH, Berlin, http://cepharum.de
+ * (c) 2018 cepharum GmbH, Berlin, http://cepharum.de
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2017 cepharum GmbH
+ * Copyright (c) 2018 cepharum GmbH
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -99,15 +99,17 @@ suite( "Models API", function() {
 			Item.schema.hooks.should.be.empty();
 		} );
 
-		test( "accepts schema defining (string) attributes the simplest way", function() {
+		test( "accepts schema defining attributes of type `string`(implicitly)", function() {
 			const Item = Model.define( "Item", {
 				label: {},
 				alias: {},
 			} );
 
-
 			Item.schema.should.be.Object().which.has.properties( "attributes", "computeds", "hooks" );
 			Item.schema.attributes.should.not.be.empty();
+			Item.schema.attributes.should.have.size( 2 );
+			Item.schema.attributes.should.have.ownProperty( "label" ).which.has.property( "type" ).which.is.equal( "string" );
+			Item.schema.attributes.should.have.ownProperty( "alias" ).which.has.property( "type" ).which.is.equal( "string" );
 			Item.schema.computeds.should.be.empty();
 			Item.schema.hooks.should.be.empty();
 		} );
