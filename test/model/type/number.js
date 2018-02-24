@@ -767,57 +767,21 @@ suite( "Model Attribute Type `number`", function() {
 			( () => deserialize( ["required: true"] ) ).should.not.throw();
 		} );
 
-		test( "returns `null` on providing `null`", function() {
-			Should( deserialize( null ) ).be.null();
-		} );
-
-		test( "returns `null` on providing `undefined`", function() {
-			Should( deserialize( undefined ) ).be.null();
-		} );
-
-		test( "returns `null` on providing empty string", function() {
-			Should( deserialize( "" ) ).be.null();
-		} );
-
-		test( "returns `null` on providing string consisting of whitespaces, only", function() {
-			Should( deserialize( " \n\t\r\f " ) ).be.null();
-		} );
-
-		test( "returns any provided number as given", function() {
+		test( "returns any value as-is", function() {
 			[
+				null,
+				undefined,
+				"",
+				" \r\t\n\f ",
 				0,
 				1.5,
 				-2.5e7,
-			]
-				.forEach( string => {
-					deserialize( string ).should.be.equal( string );
-				} );
-		} );
-
-		test( "converts any string-representation of a number to number", function() {
-			[
 				"0",
 				"1.5",
 				"-2.5e7",
-			]
-				.forEach( value => {
-					deserialize( value ).should.be.equal( parseFloat( value ) );
-				} );
-		} );
-
-		test( "converts string not representing any number to `NaN`", function() {
-			[
 				"hello",
 				"1.5 hours",
 				"up to -2.5e7",
-			]
-				.forEach( value => {
-					deserialize( value ).should.be.Number().which.is.NaN();
-				} );
-		} );
-
-		test( "converts booleans, objects and functions to `NaN`", function() {
-			[
 				false,
 				true,
 				[],
@@ -827,7 +791,7 @@ suite( "Model Attribute Type `number`", function() {
 				() => 1,
 			]
 				.forEach( value => {
-					deserialize( value ).should.be.Number().which.is.NaN();
+					Should( deserialize( value ) ).be.equal( value );
 				} );
 		} );
 	} );

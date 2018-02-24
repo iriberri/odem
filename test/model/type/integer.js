@@ -773,77 +773,25 @@ suite( "Model Attribute Type `integer`", function() {
 			( () => deserialize( ["required: true"] ) ).should.not.throw();
 		} );
 
-		test( "returns `null` on providing `null`", function() {
-			Should( deserialize( null ) ).be.null();
-		} );
-
-		test( "returns `null` on providing `undefined`", function() {
-			Should( deserialize( undefined ) ).be.null();
-		} );
-
-		test( "returns `null` on providing empty string", function() {
-			Should( deserialize( "" ) ).be.null();
-		} );
-
-		test( "returns `null` on providing string consisting of whitespaces, only", function() {
-			Should( deserialize( " \n\t\r\f " ) ).be.null();
-		} );
-
-		test( "returns any provided integer as given", function() {
+		test( "returns any provided as-is", function() {
 			[
+				null,
+				undefined,
+				"",
+				" \r\t\n\f ",
 				0,
 				1,
 				-20000000,
-			]
-				.forEach( value => {
-					deserialize( value ).should.be.equal( value );
-				} );
-		} );
-
-		test( "returns any provided number rounded to integer", function() {
-			[
 				1.5,
 				-2.5e7,
-			]
-				.forEach( value => {
-					deserialize( value ).should.be.equal( Math.round( value ) );
-				} );
-		} );
-
-		test( "converts any string-representation of an integer to integer", function() {
-			[
 				"0",
 				"1",
 				"-20000000",
-			]
-				.forEach( value => {
-					deserialize( value ).should.be.equal( parseInt( value ) );
-				} );
-		} );
-
-		test( "converts any string-representation of a number to rounded integer", function() {
-			[
 				"1.5",
 				"-2.5e7",
-			]
-				.forEach( value => {
-					deserialize( value ).should.be.equal( Math.round( parseFloat( value ) ) );
-				} );
-		} );
-
-		test( "converts string not representing any integer to `NaN`", function() {
-			[
 				"hello",
 				"1 hours",
 				"less than -20000000",
-			]
-				.forEach( value => {
-					deserialize( value ).should.be.Number().which.is.NaN();
-				} );
-		} );
-
-		test( "converts booleans, objects and functions to `NaN`", function() {
-			[
 				false,
 				true,
 				[],
@@ -853,7 +801,7 @@ suite( "Model Attribute Type `integer`", function() {
 				() => 1,
 			]
 				.forEach( value => {
-					deserialize( value ).should.be.Number().which.is.NaN();
+					Should( deserialize( value ) ).be.equal( value );
 				} );
 		} );
 	} );

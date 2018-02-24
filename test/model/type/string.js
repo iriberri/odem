@@ -704,29 +704,16 @@ suite( "Model Attribute Type `string`", function() {
 			( () => deserialize( ["required: true"] ) ).should.not.throw();
 		} );
 
-		test( "returns `null` on providing `null`", function() {
-			Should( deserialize( null ) ).be.null();
-		} );
-
-		test( "returns `null` on providing `undefined`", function() {
-			Should( deserialize( undefined ) ).be.null();
-		} );
-
-		test( "returns any provided string as given", function() {
+		test( "returns any provided value as-is", function() {
 			[
+				null,
+				undefined,
 				"",
+				" \r\t\n\f ",
 				"abc",
 				"null",
 				"\u00a0",
 				"\x00\x01\x02\x1b\x00",
-			]
-				.forEach( string => {
-					deserialize( string ).should.be.equal( string );
-				} );
-		} );
-
-		test( "converts any non-string value to string", function() {
-			[
 				false,
 				true,
 				0,
@@ -739,7 +726,7 @@ suite( "Model Attribute Type `string`", function() {
 				() => 1,
 			]
 				.forEach( value => {
-					deserialize( value ).should.be.equal( String( value ) );
+					Should( deserialize( value ) ).be.equal( value );
 				} );
 		} );
 	} );
