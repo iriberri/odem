@@ -178,7 +178,7 @@ suite( "Model Attribute Type `number`", function() {
 			checkDefinition( { max: 1 } ).should.be.empty();
 		} );
 
-		test( "adjusts provided definition on fixing limits on length in wrong order", function() {
+		test( "adjusts provided definition on fixing limits on value in wrong order", function() {
 			const source = {
 				min: 5,
 				max: 0,
@@ -232,24 +232,26 @@ suite( "Model Attribute Type `number`", function() {
 			Should( coerce( null ) ).be.null();
 		} );
 
-		test( "returns NaN on providing `false`", function() {
+		test( "returns `NaN` on providing `false`", function() {
 			coerce( false ).should.be.NaN();
 		} );
 
-		test( "returns NaN on providing `true`", function() {
+		test( "returns `NaN` on providing `true`", function() {
 			coerce( true ).should.be.NaN();
 		} );
 
-		test( "returns NaN on providing empty string", function() {
-			coerce( "" ).should.be.NaN();
+		test( "returns `null` on providing empty string", function() {
+			Should( coerce( "" ) ).be.null();
 		} );
 
-		test( "returns NaN on providing non-numeric string", function() {
+		test( "returns `null` on providing string consisting of whitespaces, only", function() {
+			Should( coerce( " \r\t\n\f " ) ).be.null();
+		} );
+
+		test( "returns `NaN` on providing non-numeric string", function() {
 			[
-				"    ",
 				"foo",
 				"bar",
-				"\u00a0",
 				"\x00\x1b\x01\x00",
 			]
 				.forEach( s => {
@@ -257,7 +259,7 @@ suite( "Model Attribute Type `number`", function() {
 				} );
 		} );
 
-		test( "returns NaN on providing partially numeric string", function() {
+		test( "returns `NaN` on providing partially numeric string", function() {
 			[
 				"4,5",
 				"5 people",
@@ -315,7 +317,7 @@ suite( "Model Attribute Type `number`", function() {
 				} );
 		} );
 
-		test( "returns NaN on providing arrays", function() {
+		test( "returns `NaN` on providing arrays", function() {
 			[
 				[],
 				["    "],
@@ -330,7 +332,7 @@ suite( "Model Attribute Type `number`", function() {
 				} );
 		} );
 
-		test( "returns NaN on providing objects", function() {
+		test( "returns `NaN` on providing objects", function() {
 			[
 				{},
 				{ value: "    " },
@@ -348,7 +350,7 @@ suite( "Model Attribute Type `number`", function() {
 				} );
 		} );
 
-		test( "returns NaN on providing functions", function() {
+		test( "returns `NaN` on providing functions", function() {
 			[
 				() => {},
 				function() {},
@@ -531,7 +533,7 @@ suite( "Model Attribute Type `number`", function() {
 			collector.should.have.length( 4 );
 		} );
 
-		test( "obeys demand for minimum value on validating NaN", function() {
+		test( "obeys demand for minimum value on validating `NaN`", function() {
 			const collector = [];
 
 			Should( isValid( "name", NaN, { min: 1 }, collector ) ).be.undefined();
@@ -588,7 +590,7 @@ suite( "Model Attribute Type `number`", function() {
 			collector.should.have.length( 4 );
 		} );
 
-		test( "obeys demand for maximum value on validating NaN", function() {
+		test( "obeys demand for maximum value on validating `NaN`", function() {
 			const collector = [];
 
 			Should( isValid( "name", NaN, { max: 1 }, collector ) ).be.undefined();
@@ -655,7 +657,7 @@ suite( "Model Attribute Type `number`", function() {
 			collector.should.have.size( 4 );
 		} );
 
-		test( "obeys combined demands for minimum and maximum value on validating NaN", function() {
+		test( "obeys combined demands for minimum and maximum value on validating `NaN`", function() {
 			const definition = { min: -2, max: 3 };
 			const collector = [];
 
@@ -663,7 +665,7 @@ suite( "Model Attribute Type `number`", function() {
 			collector.should.not.be.empty();
 		} );
 
-		test( "obeys NaN failing on either limit in a combined demand for minimum and maximum value", function() {
+		test( "obeys `NaN` failing on either limit in a combined demand for minimum and maximum value", function() {
 			const definition = { min: -2, max: 3 };
 			const collector = [];
 
@@ -710,14 +712,14 @@ suite( "Model Attribute Type `number`", function() {
 			Should( serialize( undefined ) ).be.null();
 		} );
 
-		test( "returns any provided string as given", function() {
+		test( "returns any provided number as given", function() {
 			[
 				0,
 				1.5,
 				-2.5e7,
 			]
-				.forEach( string => {
-					serialize( string ).should.be.equal( string );
+				.forEach( value => {
+					serialize( value ).should.be.equal( value );
 				} );
 		} );
 
@@ -803,7 +805,7 @@ suite( "Model Attribute Type `number`", function() {
 				} );
 		} );
 
-		test( "converts string not representing any number to NaN", function() {
+		test( "converts string not representing any number to `NaN`", function() {
 			[
 				"hello",
 				"1.5 hours",
@@ -814,7 +816,7 @@ suite( "Model Attribute Type `number`", function() {
 				} );
 		} );
 
-		test( "converts booleans, objects and functions to NaN", function() {
+		test( "converts booleans, objects and functions to `NaN`", function() {
 			[
 				false,
 				true,
