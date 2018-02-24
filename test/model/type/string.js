@@ -63,6 +63,11 @@ suite( "Model Attribute Type `string`", function() {
 		AllTypes.selectByName( "text" ).should.be.equal( Type );
 	} );
 
+	test( "is commonly exposed by its name and all its aliases case-insensitively", function() {
+		AllTypes.selectByName( "STRING" ).should.be.equal( Type );
+		AllTypes.selectByName( "TEXT" ).should.be.equal( Type );
+	} );
+
 	suite( "is exposing method `checkDefinition()` which", function() {
 		const { checkDefinition } = Type;
 
@@ -656,7 +661,7 @@ suite( "Model Attribute Type `string`", function() {
 				} );
 		} );
 
-		test( "relies on prior coercion to convert non-strings to strings, thus returning any other value as is", function() {
+		test( "relies on prior coercion to convert non-strings to strings, thus returning any other value as is, too", function() {
 			[
 				false,
 				true,
@@ -720,7 +725,7 @@ suite( "Model Attribute Type `string`", function() {
 				} );
 		} );
 
-		test( "converts any non-string value available from external datasource to to string", function() {
+		test( "converts any non-string value to string", function() {
 			[
 				false,
 				true,

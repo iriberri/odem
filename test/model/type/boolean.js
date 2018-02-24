@@ -63,6 +63,11 @@ suite( "Model Attribute Type `boolean`", function() {
 		AllTypes.selectByName( "bool" ).should.be.equal( Type );
 	} );
 
+	test( "is commonly exposed by its name and all its aliases case-insensitively", function() {
+		AllTypes.selectByName( "BOOLEAN" ).should.be.equal( Type );
+		AllTypes.selectByName( "BOOL" ).should.be.equal( Type );
+	} );
+
 	suite( "is exposing method `checkDefinition()` which", function() {
 		const { checkDefinition } = Type;
 
