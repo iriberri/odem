@@ -729,10 +729,10 @@ suite( "Model compiler", function() {
 			( () => compileDeserializer( { name: { type: "int" } } ) ).should.not.throw();
 		} );
 
-		test( "returns a function which isn't expecting arguments", function() {
+		test( "returns a function which is expecting single argument", function() {
 			const deserializer = compileDeserializer( {} );
 
-			deserializer.should.be.Function().which.has.length( 0 );
+			deserializer.should.be.Function().which.has.length( 1 );
 		} );
 
 		test( "returns empty function instantly invocable w/o any particular context", function() {
@@ -751,36 +751,39 @@ suite( "Model compiler", function() {
 			const definition = { name: { type: "string" }, age: { type: "int" } };
 			const deserializer = compileDeserializer( definition );
 
-			deserializer.should.be.Function().which.has.length( 0 );
+			deserializer.should.be.Function().which.has.length( 1 );
 			deserializer.should.throw();
 
-			deserializer.bind( { properties: {} } ).should.not.throw();
-			deserializer.bind( { properties: {} } )().should.be.Object().which.has.size( 2 );
+			deserializer.bind( { properties: {} }, definition ).should.not.throw();
+			deserializer.bind( { properties: {} }, definition )().should.be.Object().which.has.size( 2 );
 		} );
 
 		test( "returns non-empty function on non-empty definition returning object with deserialized value of every defined attribute", function() {
-			let deserializer = compileDeserializer( { name: { type: "string" } } );
+			let definition = { name: { type: "string" } };
+			let deserializer = compileDeserializer( definition );
 
-			deserializer.should.be.Function().which.has.length( 0 );
+			deserializer.should.be.Function().which.has.length( 1 );
 			deserializer.should.throw();
 
-			let deserialized = deserializer.bind( { properties: { name: "John Doe", age: 42 } } )();
+			let deserialized = deserializer.bind( { properties: { name: "John Doe", age: 42 } }, definition )();
 			deserialized.should.be.Object().which.has.size( 1 );
 			deserialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
 
 
-			deserializer = compileDeserializer( { name: { type: "string" }, age: { type: "int" } } );
+			definition = { name: { type: "string" }, age: { type: "int" } };
+			deserializer = compileDeserializer( definition );
 
-			deserialized = deserializer.bind( { properties: { name: "John Doe", age: 42 } } )();
+			deserialized = deserializer.bind( { properties: { name: "John Doe", age: 42 } }, definition )();
 			deserialized.should.be.Object().which.has.size( 2 );
 			deserialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
 			deserialized.should.have.ownProperty( "age" ).which.is.equal( 42 );
 		} );
 
 		test( "returns function deserializing attribute's values coping w/ missing information in serialized data", function() {
-			const deserializer = compileDeserializer( { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } } );
+			const definition = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
+			const deserializer = compileDeserializer( definition );
 
-			const deserialized = deserializer.bind( { properties: {} } )();
+			const deserialized = deserializer.bind( { properties: {} }, definition )();
 			deserialized.should.be.Object().which.has.size( 3 );
 			deserialized.should.have.ownProperty( "name" ).which.is.null();
 			deserialized.should.have.ownProperty( "age" ).which.is.null();
@@ -788,9 +791,10 @@ suite( "Model compiler", function() {
 		} );
 
 		test( "returns function deserializing attribute's values coping w/ information in serialized data mismatching type of attribute", function() {
-			const deserializer = compileDeserializer( { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } } );
+			const definition = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
+			const deserializer = compileDeserializer( definition );
 
-			const deserialized = deserializer.bind( { properties: { name: 12345, age: "54321", active: "" } } )();
+			const deserialized = deserializer.bind( { properties: { name: 12345, age: "54321", active: "" } }, definition )();
 			deserialized.should.be.Object().which.has.size( 3 );
 			deserialized.should.have.ownProperty( "name" ).which.is.equal( "12345" );
 			deserialized.should.have.ownProperty( "age" ).which.is.equal( 54321 );
