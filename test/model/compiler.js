@@ -37,6 +37,45 @@ const Compiler = require( "../../lib/model/compiler" );
 
 
 suite( "Model compiler", function() {
+	/**
+	 * Creates some "class" imitating parts of `Model`.
+	 *
+	 * @param {object<string,object>} attributes attributes' definitions to be exposed in faked model's schema
+	 * @param {object<string,function>} computeds computed attributes' definitions to be exposed in faked model's schema
+	 * @param {object<string,function[]>} hooks hook definitions to be exposed in faked model's schema
+	 * @returns {Function}
+	 */
+	function fakeModel( { attributes = {}, computeds = {}, hooks = {} } = {} ) {
+		const fake = function FakeModel() {};
+
+		Object.defineProperties( fake, {
+			schema: { value: { attributes, computeds, hooks } },
+		} );
+
+		return fake;
+	}
+
+	/**
+	 * Creates instance of some "class" imitating parts of `Model`.
+	 *
+	 * @param {object<string,*>} properties properties of instance of faked model
+	 * @param {object<string,object>} attributes attributes' definitions to be exposed in faked model's schema
+	 * @param {object<string,function>} computeds computed attributes' definitions to be exposed in faked model's schema
+	 * @param {object<string,function[]>} hooks hook definitions to be exposed in faked model's schema
+	 * @returns {Function}
+	 */
+	function fakeModelInstance( { properties = {}, attributes = {}, computeds = {}, hooks = {} } = {} ) {
+		const Fake = fakeModel( { attributes, computeds, hooks } );
+		const fake = new Fake();
+
+		Object.defineProperties( fake, {
+			properties: { value: properties },
+		} );
+
+		return fake;
+	}
+
+
 	test( "is available", function() {
 		Should.exist( Compiler );
 	} );
@@ -465,34 +504,35 @@ suite( "Model compiler", function() {
 			( () => compileValidator( { name: { type: "int" } } ) ).should.not.throw();
 		} );
 
-		test( "returns a function", function() {
+		test( "returns function not expecting any arguments on invocation", function() {
 			const validator = compileValidator( {} );
 
-			validator.should.be.Function().which.has.length( 1 );
+			validator.should.be.Function().which.has.length( 0 );
 		} );
 
-		test( "returns empty function instantly invocable w/o any particular arguments or context", function() {
+		test( "returns function expecting to be bound to some model instance or similar on invocation", function() {
 			const validator = compileValidator( {} );
 
-			validator.should.not.throw();
+			validator.should.throw();
+			validator.bind( fakeModelInstance() ).should.not.throw();
 		} );
 
 		test( "returns empty function returning empty array on invocation", function() {
 			const validator = compileValidator( {} );
 
-			validator().should.be.Array().which.is.empty();
+			validator.call( fakeModelInstance() ).should.be.Array().which.is.empty();
 		} );
 
 		test( "returns non-empty function on non-empty definition which is throwing on invocation w/o context similar to Model instance and w/o attributes' definition", function() {
 			const definition = { name: { type: "string" }, age: { type: "int" } };
 			const validator = compileValidator( definition );
 
-			validator.should.be.Function().which.has.length( 1 );
+			validator.should.be.Function().which.has.length( 0 );
 			validator.should.throw();
 
-			validator.bind( { properties: {} } ).should.throw();
-			validator.bind( { properties: {} }, definition ).should.not.throw();
-			validator.bind( { properties: {} }, definition )().should.be.Array();
+			validator.bind( fakeModelInstance() ).should.throw();
+			validator.bind( fakeModelInstance( { attributes: definition } ) ).should.not.throw();
+			validator.bind( fakeModelInstance( { attributes: definition } ) )().should.be.Array();
 		} );
 	} );
 
@@ -520,70 +560,88 @@ suite( "Model compiler", function() {
 			( () => compileCoercion( { name: { type: "int" } } ) ).should.not.throw();
 		} );
 
-		test( "returns a function requiring one argument", function() {
+		test( "returns function not expecting any arguments on invocation", function() {
 			const coercer = compileCoercion( {} );
 
-			coercer.should.be.Function().which.has.length( 1 );
+			coercer.should.be.Function().which.has.length( 0 );
 		} );
 
-		test( "returns empty function instantly invocable w/o any particular context", function() {
+		test( "returns function expecting to be bound to some model instance or similar on invocation", function() {
 			const coercer = compileCoercion( {} );
 
-			coercer.should.not.throw();
+			coercer.should.throw();
+			coercer.bind( fakeModelInstance() ).should.not.throw();
 		} );
 
 		test( "returns empty function not returning anything", function() {
 			const coercer = compileCoercion( {} );
 
-			Should.not.exist( coercer( {} ) );
+			Should( coercer.call( fakeModelInstance() ) ).be.undefined();
 		} );
 
-		test( "returns non-empty function on non-empty definition which is throwing on invocation w/o context similar to Model instance and provision of attributes' definition", function() {
-			const definition = { name: { type: "string" }, age: { type: "int" } };
-			const coercer = compileCoercion( definition );
+		test( "returns non-empty function on non-empty definition which is expecting attributes' definition as soon as there are matching properties", function() {
+			const attributes = { name: { type: "string" }, age: { type: "int" } };
+			const mismatching = { label: "John", size: 42 };
+			const matchingName = { name: "John" };
+			const matchingAge = { age: 42 };
+			const matchingBoth = { name: "John", age: 42 };
+			const coercer = compileCoercion( attributes );
 
-			coercer.should.be.Function().which.has.length( 1 );
+			coercer.should.be.Function().which.has.length( 0 );
 			coercer.should.throw();
 
-			coercer.bind( { properties: {} } ).should.throw();
-			coercer.bind( { properties: {} }, definition ).should.not.throw();
+			coercer.bind( fakeModelInstance( {} ) ).should.not.throw();
+			coercer.bind( fakeModelInstance( { properties: mismatching } ) ).should.not.throw();
+			coercer.bind( fakeModelInstance( { properties: mismatching, attributes } ) ).should.not.throw();
+			coercer.bind( fakeModelInstance( { properties: Object.assign( {}, mismatching, matchingName ) } ) ).should.throw();
+			coercer.bind( fakeModelInstance( { properties: Object.assign( {}, mismatching, matchingName ), attributes } ) ).should.not.throw();
+			coercer.bind( fakeModelInstance( { properties: Object.assign( {}, mismatching, matchingAge ) } ) ).should.throw();
+			coercer.bind( fakeModelInstance( { properties: Object.assign( {}, mismatching, matchingAge ), attributes } ) ).should.not.throw();
+			coercer.bind( fakeModelInstance( { properties: Object.assign( {}, mismatching, matchingBoth ) } ) ).should.throw();
+			coercer.bind( fakeModelInstance( { properties: Object.assign( {}, mismatching, matchingBoth ), attributes } ) ).should.not.throw();
+			coercer.bind( fakeModelInstance( { properties: matchingName } ) ).should.throw();
+			coercer.bind( fakeModelInstance( { properties: matchingName, attributes } ) ).should.not.throw();
+			coercer.bind( fakeModelInstance( { properties: matchingAge } ) ).should.throw();
+			coercer.bind( fakeModelInstance( { properties: matchingAge, attributes } ) ).should.not.throw();
+			coercer.bind( fakeModelInstance( { properties: matchingBoth } ) ).should.throw();
+			coercer.bind( fakeModelInstance( { properties: matchingBoth, attributes } ) ).should.not.throw();
 		} );
 
 		test( "returns non-empty function on non-empty definition not returning anything", function() {
 			const definition = { name: { type: "string" }, age: { type: "int" } };
 			const coercer = compileCoercion( definition );
 
-			Should.not.exist( coercer.bind( { properties: {} }, definition )() );
+			Should( coercer.call( fakeModelInstance( { properties: {}, attributes: definition } ) ) ).be.undefined();
 		} );
 
 		test( "returns non-empty function on non-empty definition adjusting properties provided as context", function() {
-			let definition = { name: { type: "string" } };
-			let coercer = compileCoercion( definition );
+			let attributes = { name: { type: "string" } };
+			let coercer = compileCoercion( attributes );
 
-			coercer.should.be.Function().which.has.length( 1 );
+			coercer.should.be.Function().which.has.length( 0 );
 			coercer.should.throw();
 
-			let item = { properties: { name: "John Doe", age: 42 } };
-			let coerced = coercer.bind( item, definition )();
+			let item = fakeModelInstance( { properties: { name: "John Doe", age: 42 }, attributes } );
+			let coerced = coercer.bind( item, attributes )();
 			Should.not.exist( coerced );
 			item.properties.should.have.size( 2 );
 			item.properties.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
 			item.properties.should.have.ownProperty( "age" ).which.is.equal( 42 );
 
 
-			definition = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
-			coercer = compileCoercion( definition );
+			attributes = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
+			coercer = compileCoercion( attributes );
 
-			item = { properties: { name: "John Doe", age: 42, active: true } };
-			coerced = coercer.bind( item, definition )();
+			item = fakeModelInstance( { properties: { name: "John Doe", age: 42, active: true }, attributes } );
+			coerced = coercer.bind( item, attributes )();
 			Should.not.exist( coerced );
 			item.properties.should.have.size( 3 );
 			item.properties.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
 			item.properties.should.have.ownProperty( "age" ).which.is.equal( 42 );
 			item.properties.should.have.ownProperty( "active" ).which.is.equal( true );
 
-			item = { properties: { name: null, age: "42", active: 1 } };
-			coerced = coercer.bind( item, definition )();
+			item = fakeModelInstance( { properties: { name: null, age: "42", active: 1 }, attributes } );
+			coerced = coercer.bind( item, attributes )();
 			Should.not.exist( coerced );
 			item.properties.should.have.size( 3 );
 			item.properties.should.have.ownProperty( "name" ).which.is.null();
@@ -592,14 +650,14 @@ suite( "Model compiler", function() {
 		} );
 
 		test( "returns non-empty function on non-empty definition adjusting defined properties in provided context, only", function() {
-			let definition = { name: { type: "string" } };
-			let coercer = compileCoercion( definition );
+			let attributes = { name: { type: "string" } };
+			let coercer = compileCoercion( attributes );
 
-			coercer.should.be.Function().which.has.length( 1 );
+			coercer.should.be.Function().which.has.length( 0 );
 			coercer.should.throw();
 
-			let item = { properties: { name: "John Doe", age: "42", active: 1 } };
-			let coerced = coercer.bind( item, definition )();
+			let item = fakeModelInstance( { properties: { name: "John Doe", age: "42", active: 1 }, attributes } );
+			let coerced = coercer.bind( item, attributes )();
 			Should.not.exist( coerced );
 			item.properties.should.have.size( 3 );
 			item.properties.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
@@ -608,11 +666,11 @@ suite( "Model compiler", function() {
 		} );
 
 		test( "returns non-empty function on non-empty definition setting all defined properties `null` if unset", function() {
-			const definition = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
-			const coercer = compileCoercion( definition );
+			const attributes = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
+			const coercer = compileCoercion( attributes );
 
-			const item = { properties: {} };
-			const coerced = coercer.bind( item, definition )();
+			const item = fakeModelInstance( { attributes } );
+			const coerced = coercer.bind( item, attributes )();
 			Should.not.exist( coerced );
 			item.properties.should.have.size( 3 );
 			item.properties.should.have.ownProperty( "name" ).which.is.null();
@@ -645,7 +703,7 @@ suite( "Model compiler", function() {
 			( () => compileSerializer( { name: { type: "int" } } ) ).should.not.throw();
 		} );
 
-		test( "returns a function which isn't expecting arguments", function() {
+		test( "returns function not expecting any arguments on invocation", function() {
 			const serializer = compileSerializer( {} );
 
 			serializer.should.be.Function().which.has.length( 0 );
@@ -670,8 +728,8 @@ suite( "Model compiler", function() {
 			serializer.should.be.Function().which.has.length( 0 );
 			serializer.should.throw();
 
-			serializer.bind( { properties: {} } ).should.not.throw();
-			serializer.bind( { properties: {} } )().should.be.Object().which.has.size( 2 );
+			serializer.bind( fakeModelInstance() ).should.not.throw();
+			serializer.bind( fakeModelInstance() )().should.be.Object().which.has.size( 2 );
 		} );
 
 		test( "returns non-empty function on non-empty definition returning object with serialized value of every defined attribute", function() {
@@ -680,14 +738,14 @@ suite( "Model compiler", function() {
 			serializer.should.be.Function().which.has.length( 0 );
 			serializer.should.throw();
 
-			let serialized = serializer.bind( { properties: { name: "John Doe", age: 42 } } )();
+			let serialized = serializer.bind( fakeModelInstance( { properties: { name: "John Doe", age: 42 } } ) )();
 			serialized.should.be.Object().which.has.size( 1 );
 			serialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
 
 
 			serializer = compileSerializer( { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } } );
 
-			serialized = serializer.bind( { properties: { name: "John Doe", age: 42, active: true } } )();
+			serialized = serializer.bind( fakeModelInstance( { properties: { name: "John Doe", age: 42, active: true } } ) )();
 			serialized.should.be.Object().which.has.size( 3 );
 			serialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
 			serialized.should.have.ownProperty( "age" ).which.is.equal( 42 );
@@ -697,7 +755,7 @@ suite( "Model compiler", function() {
 		test( "returns non-empty function on non-empty definition returning serialized form of all defined attributes including those w/o value", function() {
 			const serializer = compileSerializer( { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } } );
 
-			const serialized = serializer.bind( { properties: {} } )();
+			const serialized = serializer.bind( fakeModelInstance() )();
 			serialized.should.be.Object().which.has.size( 3 );
 			serialized.should.have.ownProperty( "name" ).which.is.null();
 			serialized.should.have.ownProperty( "age" ).which.is.null();
@@ -729,61 +787,62 @@ suite( "Model compiler", function() {
 			( () => compileDeserializer( { name: { type: "int" } } ) ).should.not.throw();
 		} );
 
-		test( "returns a function which is expecting single argument", function() {
+		test( "returns function not expecting any arguments on invocation", function() {
 			const deserializer = compileDeserializer( {} );
 
-			deserializer.should.be.Function().which.has.length( 1 );
+			deserializer.should.be.Function().which.has.length( 0 );
 		} );
 
-		test( "returns empty function instantly invocable w/o any particular context", function() {
+		test( "returns function expecting to be bound to some model instance or similar on invocation", function() {
 			const deserializer = compileDeserializer( {} );
 
-			deserializer.should.not.throw();
+			deserializer.should.throw();
+			deserializer.bind( fakeModelInstance() ).should.not.throw();
 		} );
 
 		test( "returns empty function returning empty object of serialized values on invocation", function() {
 			const deserializer = compileDeserializer( {} );
 
-			deserializer().should.be.Object().which.is.empty();
+			deserializer.call( fakeModelInstance() ).should.be.Object().which.is.empty();
 		} );
 
 		test( "returns non-empty function on non-empty definition which is throwing on invocation w/o context similar to Model instance", function() {
-			const definition = { name: { type: "string" }, age: { type: "int" } };
-			const deserializer = compileDeserializer( definition );
+			const attributes = { name: { type: "string" }, age: { type: "int" } };
+			const deserializer = compileDeserializer( attributes );
 
-			deserializer.should.be.Function().which.has.length( 1 );
+			deserializer.should.be.Function().which.has.length( 0 );
 			deserializer.should.throw();
 
-			deserializer.bind( { properties: {} }, definition ).should.not.throw();
-			deserializer.bind( { properties: {} }, definition )().should.be.Object().which.has.size( 2 );
+			deserializer.bind( fakeModelInstance( { attributes } ) ).should.not.throw();
+			deserializer.bind( fakeModelInstance( { attributes } ) )().should.be.Object().which.has.size( 2 );
 		} );
 
 		test( "returns non-empty function on non-empty definition returning object with deserialized value of every defined attribute", function() {
-			let definition = { name: { type: "string" } };
-			let deserializer = compileDeserializer( definition );
+			let attributes = { name: { type: "string" } };
+			let deserializer = compileDeserializer( attributes );
 
-			deserializer.should.be.Function().which.has.length( 1 );
+			deserializer.should.be.Function().which.has.length( 0 );
 			deserializer.should.throw();
 
-			let deserialized = deserializer.bind( { properties: { name: "John Doe", age: 42 } }, definition )();
+			let deserialized = deserializer.bind( fakeModelInstance( { properties: { name: "John Doe", age: 42 }, attributes } ) )();
 			deserialized.should.be.Object().which.has.size( 1 );
 			deserialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
 
 
-			definition = { name: { type: "string" }, age: { type: "int" } };
-			deserializer = compileDeserializer( definition );
+			attributes = { name: { type: "string" }, age: { type: "int" } };
+			deserializer = compileDeserializer( attributes );
 
-			deserialized = deserializer.bind( { properties: { name: "John Doe", age: 42 } }, definition )();
+			deserialized = deserializer.bind( fakeModelInstance( { properties: { name: "John Doe", age: 42 }, attributes } ) )();
 			deserialized.should.be.Object().which.has.size( 2 );
 			deserialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
 			deserialized.should.have.ownProperty( "age" ).which.is.equal( 42 );
 		} );
 
 		test( "returns function deserializing attribute's values coping w/ missing information in serialized data", function() {
-			const definition = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
-			const deserializer = compileDeserializer( definition );
+			const attributes = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
+			const deserializer = compileDeserializer( attributes );
 
-			const deserialized = deserializer.bind( { properties: {} }, definition )();
+			const deserialized = deserializer.bind( fakeModelInstance( { attributes } ) )();
 			deserialized.should.be.Object().which.has.size( 3 );
 			deserialized.should.have.ownProperty( "name" ).which.is.null();
 			deserialized.should.have.ownProperty( "age" ).which.is.null();
@@ -791,10 +850,10 @@ suite( "Model compiler", function() {
 		} );
 
 		test( "returns function deserializing attribute's values coping w/ information in serialized data mismatching type of attribute", function() {
-			const definition = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
-			const deserializer = compileDeserializer( definition );
+			const attributes = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
+			const deserializer = compileDeserializer( attributes );
 
-			const deserialized = deserializer.bind( { properties: { name: 12345, age: "54321", active: "" } }, definition )();
+			const deserialized = deserializer.bind( fakeModelInstance( { properties: { name: 12345, age: "54321", active: "" }, attributes } ) )();
 			deserialized.should.be.Object().which.has.size( 3 );
 			deserialized.should.have.ownProperty( "name" ).which.is.equal( "12345" );
 			deserialized.should.have.ownProperty( "age" ).which.is.equal( 54321 );
@@ -870,17 +929,17 @@ suite( "Model compiler", function() {
 			map.name.get.should.be.Function().which.has.length( 0 );
 			map.name.set.should.be.Function().which.has.length( 1 );
 
-			map.name.get.call( { properties } ).should.be.equal( "Jane Doe" );
-			map.name.set.bind( { properties }, "Jill Doe" ).should.not.throw();
-			map.name.get.call( { properties } ).should.be.equal( "Jill Doe" );
+			map.name.get.call( fakeModelInstance( { properties } ) ).should.be.equal( "Jane Doe" );
+			map.name.set.bind( fakeModelInstance( { properties } ), "Jill Doe" ).should.not.throw();
+			map.name.get.call( fakeModelInstance( { properties } ) ).should.be.equal( "Jill Doe" );
 
 			map.should.have.ownProperty( "age" ).which.is.an.Object().and.has.size( 2 ).and.has.properties( [ "get", "set" ] );
 			map.age.get.should.be.Function().which.has.length( 0 );
 			map.age.set.should.be.Function().which.has.length( 1 );
 
-			map.age.get.call( { properties } ).should.be.equal( 23 );
-			map.age.set.bind( { properties }, 42 ).should.not.throw();
-			map.age.get.call( { properties } ).should.be.equal( 42 );
+			map.age.get.call( fakeModelInstance( { properties } ) ).should.be.equal( 23 );
+			map.age.set.bind( fakeModelInstance( { properties } ), 42 ).should.not.throw();
+			map.age.get.call( fakeModelInstance( { properties } ) ).should.be.equal( 42 );
 		} );
 
 		test( "returns non-empty object listing entry for every computed attribute in provided definition", function() {
@@ -909,17 +968,17 @@ suite( "Model compiler", function() {
 			map.name.get.should.be.Function().which.has.length( 0 );
 			map.name.set.should.be.Function().which.has.length( 1 );
 
-			map.name.get.call( { properties } ).should.be.equal( "JANE DOE" );
-			map.name.set.bind( { properties }, "Jill Doe" ).should.not.throw();
-			map.name.get.call( { properties } ).should.be.equal( "JILL DOE" );
+			map.name.get.call( fakeModelInstance( { properties } ) ).should.be.equal( "JANE DOE" );
+			map.name.set.bind( fakeModelInstance( { properties } ), "Jill Doe" ).should.not.throw();
+			map.name.get.call( fakeModelInstance( { properties } ) ).should.be.equal( "JILL DOE" );
 
 			map.should.have.ownProperty( "age" ).which.is.an.Object().and.has.size( 2 ).and.has.properties( [ "get", "set" ] );
 			map.age.get.should.be.Function().which.has.length( 0 );
 			map.age.set.should.be.Function().which.has.length( 1 );
 
-			map.age.get.call( { properties } ).should.be.equal( 46 );
-			map.age.set.bind( { properties }, 42 ).should.not.throw();
-			map.age.get.call( { properties } ).should.be.equal( 84 );
+			map.age.get.call( fakeModelInstance( { properties } ) ).should.be.equal( 46 );
+			map.age.set.bind( fakeModelInstance( { properties } ), 42 ).should.not.throw();
+			map.age.get.call( fakeModelInstance( { properties } ) ).should.be.equal( 84 );
 		} );
 
 		test( "prefers definition of getter/setter on attribute on clashing name w/ computed", function() {
@@ -934,33 +993,33 @@ suite( "Model compiler", function() {
 			map.name.get.should.be.Function().which.has.length( 0 );
 			map.name.set.should.be.Function().which.has.length( 1 );
 
-			map.name.get.call( { properties } ).should.be.equal( "Jane Doe" );
-			map.name.set.bind( { properties }, "Jill Doe" ).should.not.throw();
-			map.name.get.call( { properties } ).should.be.equal( "Jill Doe" );
+			map.name.get.call( fakeModelInstance( { properties } ) ).should.be.equal( "Jane Doe" );
+			map.name.set.bind( fakeModelInstance( { properties } ), "Jill Doe" ).should.not.throw();
+			map.name.get.call( fakeModelInstance( { properties } ) ).should.be.equal( "Jill Doe" );
 
 			map.should.have.ownProperty( "altName" ).which.is.an.Object().and.has.size( 2 ).and.has.properties( [ "get", "set" ] );
 			map.altName.get.should.be.Function().which.has.length( 0 );
 			map.altName.set.should.be.Function().which.has.length( 1 );
 
-			map.altName.get.call( { properties } ).should.be.equal( "John Doe" );
-			map.altName.set.bind( { properties }, "Jill Doe" ).should.not.throw();
-			map.altName.get.call( { properties } ).should.be.equal( "John Doe" );
+			map.altName.get.call( fakeModelInstance( { properties } ) ).should.be.equal( "John Doe" );
+			map.altName.set.bind( fakeModelInstance( { properties } ), "Jill Doe" ).should.not.throw();
+			map.altName.get.call( fakeModelInstance( { properties } ) ).should.be.equal( "John Doe" );
 
 			map.should.have.ownProperty( "age" ).which.is.an.Object().and.has.size( 2 ).and.has.properties( [ "get", "set" ] );
 			map.age.get.should.be.Function().which.has.length( 0 );
 			map.age.set.should.be.Function().which.has.length( 1 );
 
-			map.age.get.call( { properties } ).should.be.equal( 23 );
-			map.age.set.bind( { properties }, 25 ).should.not.throw();
-			map.age.get.call( { properties } ).should.be.equal( 25 );
+			map.age.get.call( fakeModelInstance( { properties } ) ).should.be.equal( 23 );
+			map.age.set.bind( fakeModelInstance( { properties } ), 25 ).should.not.throw();
+			map.age.get.call( fakeModelInstance( { properties } ) ).should.be.equal( 25 );
 
 			map.should.have.ownProperty( "size" ).which.is.an.Object().and.has.size( 2 ).and.has.properties( [ "get", "set" ] );
 			map.size.get.should.be.Function().which.has.length( 0 );
 			map.size.set.should.be.Function().which.has.length( 1 );
 
-			map.size.get.call( { properties } ).should.be.equal( 180 );
-			map.size.set.bind( { properties }, 170 ).should.not.throw();
-			map.size.get.call( { properties } ).should.be.equal( 180 );
+			map.size.get.call( fakeModelInstance( { properties } ) ).should.be.equal( 180 );
+			map.size.set.bind( fakeModelInstance( { properties } ), 170 ).should.not.throw();
+			map.size.get.call( fakeModelInstance( { properties } ) ).should.be.equal( 180 );
 		} );
 
 		test( "does not define getter/setter for attributes with names basically used by implementation of Model", function() {
