@@ -196,6 +196,25 @@ suite( "Model Attribute Type `number`", function() {
 			definition.min.should.be.equal( source.max );
 			definition.max.should.be.equal( source.min );
 		} );
+
+		test( "validates optionally given step value", function() {
+			checkDefinition( { step: undefined } ).should.be.empty();
+
+			checkDefinition( { step: null } ).should.not.be.empty();
+			checkDefinition( { step: false } ).should.not.be.empty();
+			checkDefinition( { step: true } ).should.not.be.empty();
+			checkDefinition( { step: "" } ).should.not.be.empty();
+			checkDefinition( { step: "invalid" } ).should.not.be.empty();
+			checkDefinition( { step: {} } ).should.not.be.empty();
+			checkDefinition( { step: { value: 4 } } ).should.not.be.empty();
+			checkDefinition( { step: [] } ).should.not.be.empty();
+			checkDefinition( { step: [4] } ).should.not.be.empty();
+			checkDefinition( { step: 0 } ).should.not.be.empty();
+			checkDefinition( { step: -1 } ).should.not.be.empty();
+
+			checkDefinition( { step: 1 } ).should.be.empty();
+			checkDefinition( { step: 1.5 } ).should.be.empty();
+		} );
 	} );
 
 	suite( "is exposing method `coerce()` which", function() {
