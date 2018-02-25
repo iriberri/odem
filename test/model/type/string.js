@@ -290,7 +290,7 @@ suite( "Model Attribute Type `string`", function() {
 			( () => coerce( "string", { required: true } ) ).should.not.throw();
 		} );
 
-		test( "doesn't care for definition requiring string value", function() {
+		test( "doesn't care for definition requiring value", function() {
 			Should( coerce( undefined, { required: true } ) ).be.null();
 			Should( coerce( null, { required: true } ) ).be.null();
 		} );

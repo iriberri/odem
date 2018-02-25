@@ -393,9 +393,36 @@ suite( "Model Attribute Type `integer`", function() {
 			( () => coerce( "4", { required: true } ) ).should.not.throw();
 		} );
 
-		test( "doesn't care for definition requiring string value", function() {
+		test( "doesn't care for definition requiring value", function() {
 			Should( coerce( undefined, { required: true } ) ).be.null();
 			Should( coerce( null, { required: true } ) ).be.null();
+		} );
+
+		test( "rounds value to nearest multitude of optionally defined step value", function() {
+			coerce( 4, {} ).should.be.equal( 4 );
+			coerce( 4, { step: 1 } ).should.be.equal( 4 );
+			coerce( 4, { step: 2 } ).should.be.equal( 4 );
+
+			coerce( 4, { step: 3 } ).should.be.equal( 3 );
+			coerce( 5, { step: 3 } ).should.be.equal( 6 );
+		} );
+
+		test( "obeys step value starting from optionally defined minimum value", function() {
+			coerce( 4, { step: 3 } ).should.be.equal( 3 );
+			coerce( 4, { step: 3, min: 1 } ).should.be.equal( 4 );
+			coerce( 4, { step: 3, min: 2 } ).should.be.equal( 5 );
+			coerce( 4, { step: 3, min: -1 } ).should.be.equal( 5 );
+		} );
+
+		test( "obeys non-integer step values while assuring integer result", function() {
+			coerce( 4, { step: 0.5 } ).should.be.equal( 4 );
+			coerce( 5, { step: 0.5 } ).should.be.equal( 5 );
+
+			coerce( 4, { step: 1.5 } ).should.be.equal( 5 ); // obeying step results in 4.5, but gets rounded to keep integer result
+		} );
+
+		test( "obeys step value after converting provided non-integer value to integer", function() {
+			coerce( 4.3, { step: 0.5 } ).should.be.equal( 4 ); // gets rounded to 4 first, then bound to step value 0.5 (instead of binding to step value 0.5 first, resulting in 4.5 finally rounded to 5)
 		} );
 	} );
 
