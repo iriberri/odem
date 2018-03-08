@@ -28,8 +28,6 @@
 
 "use strict";
 
-const { resolve } = require( "path" );
-
 const { suite, test } = require( "mocha" );
 const Should = require( "should" );
 
