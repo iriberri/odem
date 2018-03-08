@@ -31,6 +31,7 @@
 const { suite, test } = require( "mocha" );
 const Should = require( "should" );
 
+const Helper = require( "../../helper" );
 
 const AllTypes = require( "../../../lib/model/type" );
 const Base = require( "../../../lib/model/type/base" );
@@ -728,6 +729,132 @@ suite( "Model Attribute Type `string`", function() {
 				.forEach( value => {
 					Should( deserialize( value ) ).be.equal( value );
 				} );
+		} );
+	} );
+
+	suite( "is exposing method `compare()` which", function() {
+		const { compare } = Type;
+
+		test( "is a function to be invoked w/ three arguments", function() {
+			compare.should.be.a.Function().which.has.length( 3 );
+		} );
+
+		test( "never throws exception", function() {
+			( () => compare() ).should.not.throw();
+
+			Helper.allTypesOfData().forEach( one => {
+				( () => compare( one ) ).should.not.throw();
+
+				Helper.allTypesOfData().forEach( two => {
+					( () => compare( one, two ) ).should.not.throw();
+
+					Helper.allTypesOfData().forEach( three => {
+						( () => compare( one, two, three ) ).should.not.throw();
+					} );
+				} );
+			} );
+		} );
+
+		test( "always returns boolean", function() {
+			Helper.allTypesOfData().forEach( one => {
+				Helper.allTypesOfData().forEach( two => {
+					Helper.allTypesOfData().forEach( three => {
+						compare( one, two, three ).should.be.Boolean();
+					} );
+				} );
+			} );
+		} );
+
+		test( "considers `null` and `null` as equal", function() {
+			compare( null, null, "eq" ).should.be.true();
+
+			compare( null, null, "noteq" ).should.be.false();
+		} );
+
+		test( "considers `null` and non-`null` as inequal", function() {
+			compare( null, "", "eq" ).should.be.false();
+			compare( "", null, "eq" ).should.be.false();
+
+			compare( null, "", "noteq" ).should.be.true();
+			compare( "", null, "noteq" ).should.be.true();
+		} );
+
+		test( "returns `true` on negating `null`", function() {
+			compare( null, null, "not" ).should.be.true();
+		} );
+
+		test( "returns `true` on negating falsy coerced value", function() {
+			compare( "", null, "not" ).should.be.true();
+		} );
+
+		test( "returns `false` on negating truthy coerced value", function() {
+			compare( "0", null, "not" ).should.be.false();
+			compare( "1", null, "not" ).should.be.false();
+			compare( "a", null, "not" ).should.be.false();
+			compare( "true", null, "not" ).should.be.false();
+			compare( "false", null, "not" ).should.be.false();
+		} );
+
+		test( "detects two coerced equal values", function() {
+			compare( "", "", "eq" ).should.be.true();
+			compare( "foo", "foo", "eq" ).should.be.true();
+
+			compare( "", "", "noteq" ).should.be.false();
+			compare( "foo", "foo", "noteq" ).should.be.false();
+		} );
+
+		test( "detects two coerced inequal values", function() {
+			compare( "", "0", "eq" ).should.be.false();
+			compare( "foo", "bar", "eq" ).should.be.false();
+
+			compare( "", "0", "noteq" ).should.be.true();
+			compare( "foo", "bar", "noteq" ).should.be.true();
+		} );
+
+		test( "compares order of two coerced values", function() {
+			compare( "john", "jane", "gt" ).should.be.true();
+			compare( "john", "jane", "gte" ).should.be.true();
+			compare( "john", "john", "gt" ).should.be.false();
+			compare( "john", "john", "gte" ).should.be.true();
+
+			compare( "jane", "john", "lt" ).should.be.true();
+			compare( "jane", "john", "lte" ).should.be.true();
+			compare( "jane", "jane", "lt" ).should.be.false();
+			compare( "jane", "jane", "lte" ).should.be.true();
+		} );
+
+		test( "returns `false` on comparing non-`null` value w/ `null`-value", function() {
+			compare( "john", null, "gt" ).should.be.false();
+			compare( "john", null, "gte" ).should.be.false();
+			compare( "john", null, "gt" ).should.be.false();
+			compare( "john", null, "gte" ).should.be.false();
+			compare( "john", null, "lt" ).should.be.false();
+			compare( "john", null, "lte" ).should.be.false();
+			compare( "john", null, "lt" ).should.be.false();
+			compare( "john", null, "lte" ).should.be.false();
+		} );
+
+		test( "returns `false` on comparing `null` value w/ non-`null`-value", function() {
+			compare( null, "john", "gt" ).should.be.false();
+			compare( null, "john", "gte" ).should.be.false();
+			compare( null, "john", "gt" ).should.be.false();
+			compare( null, "john", "gte" ).should.be.false();
+			compare( null, "john", "lt" ).should.be.false();
+			compare( null, "john", "lte" ).should.be.false();
+			compare( null, "john", "lt" ).should.be.false();
+			compare( null, "john", "lte" ).should.be.false();
+		} );
+
+		test( "supports unary operation testing for value being `null`", function() {
+			compare( null, null, "null" ).should.be.true();
+
+			compare( "", null, "null" ).should.be.false();
+		} );
+
+		test( "supports unary operation testing for value not being `null`", function() {
+			compare( null, null, "notnull" ).should.be.false();
+
+			compare( "", null, "notnull" ).should.be.true();
 		} );
 	} );
 } );

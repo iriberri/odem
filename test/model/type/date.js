@@ -31,6 +31,7 @@
 const { suite, test } = require( "mocha" );
 const Should = require( "should" );
 
+const Helper = require( "../../helper" );
 
 const AllTypes = require( "../../../lib/model/type" );
 const Base = require( "../../../lib/model/type/base" );
@@ -878,6 +879,133 @@ suite( "Model Attribute Type `date`", function() {
 				.forEach( value => {
 					Should( deserialize( value ) ).be.equal( value );
 				} );
+		} );
+	} );
+
+	suite( "is exposing method `compare()` which", function() {
+		const { compare } = Type;
+
+		test( "is a function to be invoked w/ three arguments", function() {
+			compare.should.be.a.Function().which.has.length( 3 );
+		} );
+
+		test( "never throws exception", function() {
+			( () => compare() ).should.not.throw();
+
+			Helper.allTypesOfData().forEach( one => {
+				( () => compare( one ) ).should.not.throw();
+
+				Helper.allTypesOfData().forEach( two => {
+					( () => compare( one, two ) ).should.not.throw();
+
+					Helper.allTypesOfData().forEach( three => {
+						( () => compare( one, two, three ) ).should.not.throw();
+					} );
+				} );
+			} );
+		} );
+
+		test( "always returns boolean", function() {
+			Helper.allTypesOfData().forEach( one => {
+				Helper.allTypesOfData().forEach( two => {
+					Helper.allTypesOfData().forEach( three => {
+						compare( one, two, three ).should.be.Boolean();
+					} );
+				} );
+			} );
+		} );
+
+		test( "considers `null` and `null` as equal", function() {
+			compare( null, null, "eq" ).should.be.true();
+
+			compare( null, null, "noteq" ).should.be.false();
+		} );
+
+		test( "considers `null` and non-`null` as inequal", function() {
+			compare( null, new Date( "2018-02-25T08:57:01Z" ), "eq" ).should.be.false();
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "eq" ).should.be.false();
+			compare( null, NaN, "eq" ).should.be.false();
+			compare( NaN, null, "eq" ).should.be.false();
+
+			compare( null, new Date( "2018-02-25T08:57:01Z" ), "noteq" ).should.be.true();
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "noteq" ).should.be.true();
+			compare( null, NaN, "noteq" ).should.be.true();
+			compare( NaN, null, "noteq" ).should.be.true();
+		} );
+
+		test( "returns `true` on negating `null`", function() {
+			compare( null, null, "not" ).should.be.true();
+		} );
+
+		test( "returns `true` on negating falsy coerced value", function() {
+			compare( NaN, null, "not" ).should.be.true();
+		} );
+
+		test( "returns `false` on negating truthy coerced value", function() {
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "not" ).should.be.false();
+			compare( new Date( "2018-02-25" ), null, "not" ).should.be.false();
+			compare( new Date( "1970-01-01T00:00:00Z" ), null, "not" ).should.be.false();
+			compare( new Date( "1970-01-01T00:00:00" ), null, "not" ).should.be.false();
+		} );
+
+		test( "detects two coerced equal values", function() {
+			compare( new Date( "2018-02-25T08:57:01Z" ), new Date( "2018-02-25T08:57:01Z" ), "eq" ).should.be.true();
+
+			compare( new Date( "2018-02-25T08:57:01Z" ), new Date( "2018-02-25T08:57:01Z" ), "noteq" ).should.be.false();
+		} );
+
+		test( "detects two coerced inequal values", function() {
+			compare( new Date( "2018-02-25T08:57:01Z" ), new Date( "2018-02-25T08:57:00Z" ), "eq" ).should.be.false();
+
+			compare( new Date( "2018-02-25T08:57:01Z" ), new Date( "2018-02-25T08:57:00Z" ), "noteq" ).should.be.true();
+		} );
+
+		test( "compares order of two coerced values", function() {
+			compare( new Date( "2018-02-25T08:57:01Z" ), new Date( "2018-02-25T08:57:00Z" ), "gt" ).should.be.true();
+			compare( new Date( "2018-02-25T08:57:01Z" ), new Date( "2018-02-25T08:57:00Z" ), "gte" ).should.be.true();
+			compare( new Date( "2018-02-25T08:57:01Z" ), new Date( "2018-02-25T08:57:01Z" ), "gt" ).should.be.false();
+			compare( new Date( "2018-02-25T08:57:01Z" ), new Date( "2018-02-25T08:57:01Z" ), "gte" ).should.be.true();
+
+			compare( new Date( "2018-02-25T08:57:00Z" ), new Date( "2018-02-25T08:57:01Z" ), "lt" ).should.be.true();
+			compare( new Date( "2018-02-25T08:57:00Z" ), new Date( "2018-02-25T08:57:01Z" ), "lte" ).should.be.true();
+			compare( new Date( "2018-02-25T08:57:00Z" ), new Date( "2018-02-25T08:57:00Z" ), "lt" ).should.be.false();
+			compare( new Date( "2018-02-25T08:57:00Z" ), new Date( "2018-02-25T08:57:00Z" ), "lte" ).should.be.true();
+		} );
+
+		test( "returns `false` on comparing non-`null` value w/ `null`-value", function() {
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "gt" ).should.be.false();
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "gte" ).should.be.false();
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "gt" ).should.be.false();
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "gte" ).should.be.false();
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "lt" ).should.be.false();
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "lte" ).should.be.false();
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "lt" ).should.be.false();
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "lte" ).should.be.false();
+		} );
+
+		test( "returns `false` on comparing `null` value w/ non-`null`-value", function() {
+			compare( null, new Date( "2018-02-25T08:57:01Z" ), "gt" ).should.be.false();
+			compare( null, new Date( "2018-02-25T08:57:01Z" ), "gte" ).should.be.false();
+			compare( null, new Date( "2018-02-25T08:57:01Z" ), "gt" ).should.be.false();
+			compare( null, new Date( "2018-02-25T08:57:01Z" ), "gte" ).should.be.false();
+			compare( null, new Date( "2018-02-25T08:57:01Z" ), "lt" ).should.be.false();
+			compare( null, new Date( "2018-02-25T08:57:01Z" ), "lte" ).should.be.false();
+			compare( null, new Date( "2018-02-25T08:57:01Z" ), "lt" ).should.be.false();
+			compare( null, new Date( "2018-02-25T08:57:01Z" ), "lte" ).should.be.false();
+		} );
+
+		test( "supports unary operation testing for value being `null`", function() {
+			compare( null, null, "null" ).should.be.true();
+
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "null" ).should.be.false();
+			compare( NaN, null, "null" ).should.be.false();
+		} );
+
+		test( "supports unary operation testing for value not being `null`", function() {
+			compare( null, null, "notnull" ).should.be.false();
+
+			compare( new Date( "2018-02-25T08:57:01Z" ), null, "notnull" ).should.be.true();
+			compare( NaN, null, "notnull" ).should.be.true();
 		} );
 	} );
 } );

@@ -34,6 +34,7 @@ const Should = require( "should" );
 
 const Model = require( "../../lib/model/base" );
 const Compiler = require( "../../lib/model/compiler" );
+const { Adapter, MemoryAdapter, FileAdapter } = require( "../../lib/adapter" );
 
 
 suite( "Model compiler", function() {
@@ -119,7 +120,7 @@ suite( "Model compiler", function() {
 			( () => Compiler( "name" ) ).should.not.throw();
 		} );
 
-		test( "requires optional provision of schema definition object in second argument", function() {
+		test( "supports optional provision of schema definition object in second argument", function() {
 			( () => Compiler( "name" ) ).should.not.throw();
 			( () => Compiler( "name", undefined ) ).should.not.throw();
 
@@ -140,11 +141,11 @@ suite( "Model compiler", function() {
 			( () => Compiler( "name", { prop: { type: "string" } } ) ).should.not.throw();
 		} );
 
-		test( "requires optional provision of base class derived from `Model` to become base class of defined Model implementation", function() {
+		test( "supports optional provision of base class derived from `Model` to become base class of defined Model implementation", function() {
 			( () => Compiler( "name", { prop: {} } ) ).should.not.throw();
 			( () => Compiler( "name", { prop: {} }, undefined ) ).should.not.throw();
+			( () => Compiler( "name", { prop: {} }, null ) ).should.not.throw();
 
-			( () => Compiler( "name", { prop: {} }, null ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, false ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, true ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, 5 ) ).should.throw();
@@ -164,53 +165,101 @@ suite( "Model compiler", function() {
 			( () => Compiler( "name", { prop: {} }, CustomBaseClass ) ).should.not.throw();
 		} );
 
-		test( "returns class derived from `Model` (when invoked w/o schema)", function() {
-			const Sub = Compiler( "mySub" );
+		test( "supports optional provision of base class derived from `Model` to become base class of defined Model implementation", function() {
+			( () => Compiler( "name", { prop: {} }, null ) ).should.not.throw();
+			( () => Compiler( "name", { prop: {} }, null, undefined ) ).should.not.throw();
+			( () => Compiler( "name", { prop: {} }, null, null ) ).should.not.throw();
 
-			Sub.prototype.should.be.instanceOf( Model );
+			( () => Compiler( "name", { prop: {} }, null, false ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, true ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, 5 ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, -3.5 ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, 0 ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, [] ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, [CustomBaseClass] ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, () => {} ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, () => CustomBaseClass ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, {} ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, { base: CustomBaseClass } ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, "" ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, "CustomBaseClass" ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, CustomClass ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, CustomBaseClass ) ).should.throw();
+
+			( () => Compiler( "name", { prop: {} }, null, Adapter ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, MemoryAdapter ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, FileAdapter ) ).should.throw();
+
+			( () => Compiler( "name", { prop: {} }, null, new Adapter() ) ).should.not.throw();
+			( () => Compiler( "name", { prop: {} }, null, new MemoryAdapter() ) ).should.not.throw();
+			( () => Compiler( "name", { prop: {} }, null, new FileAdapter() ) ).should.not.throw();
 		} );
 
-		test( "returns class that can be instantiated (when invoked w/o schema)", function() {
-			const Sub = Compiler( "mySub" );
+		suite( "returns class that", function() {
+			test( "is derived from `Model` (when invoked w/o schema)", function() {
+				const Sub = Compiler( "mySub" );
 
-			const item = new Sub();
-
-			item.should.be.instanceOf( Model );
-		} );
-
-		test( "returns class that can be used as base class in another invocation", function() {
-			const Sub = Compiler( "mySub" );
-			const SubSub = Compiler( "mySub", {}, Sub );
-
-			const sub = new Sub();
-			const subSub = new SubSub();
-
-			sub.should.be.instanceOf( Model );
-			subSub.should.be.instanceOf( Model );
-
-			sub.should.be.instanceOf( Sub );
-			subSub.should.be.instanceOf( Sub );
-
-			sub.should.not.be.instanceOf( SubSub );
-			subSub.should.be.instanceOf( SubSub );
-		} );
-
-		test( "returns class exposing attributes defined in provided schema as properties of every instance", function() {
-			const Employee = Compiler( "employee", {
-				name: {},
-				age: {
-					type: "int"
-				},
-				label: function() {
-					return `${this.name} (Age: ${this.age})`;
-				}
+				Sub.prototype.should.be.instanceOf( Model );
 			} );
 
-			const boss = new Employee();
-			boss.name = "John Doe";
-			boss.age = 45;
+			test( "can be instantiated (when invoked w/o schema)", function() {
+				const Sub = Compiler( "mySub" );
 
-			boss.label.should.equal( "John Doe (Age: 45)" );
+				const item = new Sub();
+
+				item.should.be.instanceOf( Model );
+			} );
+
+			test( "can be used as base class in another invocation", function() {
+				const Sub = Compiler( "mySub" );
+				const SubSub = Compiler( "mySub", {}, Sub );
+
+				const sub = new Sub();
+				const subSub = new SubSub();
+
+				sub.should.be.instanceOf( Model );
+				subSub.should.be.instanceOf( Model );
+
+				sub.should.be.instanceOf( Sub );
+				subSub.should.be.instanceOf( Sub );
+
+				sub.should.not.be.instanceOf( SubSub );
+				subSub.should.be.instanceOf( SubSub );
+			} );
+
+			test( "is exposing attributes defined in provided schema as properties of every instance", function() {
+				const Employee = Compiler( "employee", {
+					name: {},
+					age: {
+						type: "int"
+					},
+					label: function() {
+						return `${this.name} (Age: ${this.age})`;
+					}
+				} );
+
+				const boss = new Employee();
+				boss.name = "John Doe";
+				boss.age = 45;
+
+				boss.label.should.equal( "John Doe (Age: 45)" );
+			} );
+
+			test( "is statically exposing adapter provided on call for compilation", function() {
+				const adapter = new MemoryAdapter();
+				const Employee = Compiler( "employee", { name: {} }, null, adapter );
+
+				Employee.adapter.should.be.equal( adapter );
+			} );
+
+			test( "is exposing adapter provided on call for compilation on every instance, too", function() {
+				const adapter = new MemoryAdapter();
+				const Employee = Compiler( "employee", { name: {} }, null, adapter );
+
+				const boss = new Employee();
+
+				boss.adapter.should.be.equal( adapter );
+			} );
 		} );
 	} );
 
@@ -945,18 +994,18 @@ suite( "Model compiler", function() {
 		test( "returns non-empty object listing entry for every computed attribute in provided definition", function() {
 			const computeds = {
 				name: function( value ) {
-					if ( value !== undefined ) {
-						this.properties.name = value;
-					} else {
+					if ( value === undefined ) {
 						return this.properties.name.toUpperCase();
 					}
+
+					this.properties.name = value;
 				},
 				age: function( value ) {
-					if ( value !== undefined ) {
-						this.properties.age = value;
-					} else {
+					if ( value === undefined ) {
 						return this.properties.age * 2;
 					}
+
+					this.properties.age = value;
 				}
 			};
 			const properties = { name: "Jane Doe", age: 23 };

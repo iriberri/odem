@@ -29,6 +29,7 @@
 "use strict";
 
 const { join } = require( "path" );
+const { Readable } = require( "stream" );
 
 const { suite, test } = require( "mocha" );
 const Should = require( "should" );
@@ -178,5 +179,425 @@ suite( "MemoryAdapter", function() {
 			join( "0", "12", "34567-89ab-cdef-fedc-ba9876543210" ),
 			join( "item", "0", "00", "00000-1111-2222-4444-888888888888" ),
 		].forEach( key => MemoryAdapter.pathToKey( key ).should.be.String().which.is.equal( key ) );
+	} );
+
+	suite( "provides `keyStream()` which", function() {
+		let adapter;
+
+		setup( function() {
+			adapter = new MemoryAdapter( { dataSource: "../data" } );
+
+			return adapter.write( "some/key/without/uuid-1", { id: "first" } )
+				.then( () => adapter.write( "some/key/without/uuid-2", { id: "second" } ) )
+				.then( () => adapter.write( "some/other/key/without/uuid-3", { id: "third" } ) )
+				.then( () => adapter.write( "some/key/with/uuid/12345678-1234-1234-1234-1234567890ab", { id: "fourth" } ) )
+				.then( () => adapter.write( "some/key/with/uuid/00000000-0000-0000-0000-000000000000", { id: "fifth" } ) );
+		} );
+
+		test( "is a function", function() {
+			adapter.should.have.property( "keyStream" ).which.is.a.Function();
+		} );
+
+		test( "returns a readable stream", function() {
+			return new Promise( resolve => {
+				const stream = adapter.keyStream();
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "end", resolve );
+				stream.resume();
+			} );
+		} );
+
+		test( "generates keys of all records in selected datasource by default", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.keyStream();
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.has.length( 5 );
+
+					streamed.sort();
+
+					streamed.should.eql( [
+						"some/key/with/uuid/00000000-0000-0000-0000-000000000000",
+						"some/key/with/uuid/12345678-1234-1234-1234-1234567890ab",
+						"some/key/without/uuid-1",
+						"some/key/without/uuid-2",
+						"some/other/key/without/uuid-3",
+					] );
+
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates keys of all records in selected datasource matching some selected prefix", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.keyStream( {
+					prefix: "some/key/without",
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.has.length( 2 );
+
+					streamed.sort();
+
+					streamed.should.eql( [
+						"some/key/without/uuid-1",
+						"some/key/without/uuid-2",
+					] );
+
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates no key if prefix doesn't select any folder or single record in backend", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.keyStream( {
+					prefix: "some/missing/key",
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data =>  streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.is.empty();
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates no key if prefix partially matching key of some folder in backend, only", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.keyStream( {
+					prefix: "some/key/wit",
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data =>  streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.is.empty();
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates some matching record's key used as prefix, only", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.keyStream( {
+					prefix: "some/key/without/uuid-1",
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data =>  streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.has.length( 1 );
+					streamed.should.eql( ["some/key/without/uuid-1"] );
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates keys of all records in selected datasource up to some requested maximum depth", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.keyStream( {
+					maxDepth: 4,
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.has.length( 2 );
+
+					streamed.sort();
+
+					streamed.should.eql( [
+						"some/key/without/uuid-1",
+						"some/key/without/uuid-2",
+					] );
+
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates keys of all records in selected datasource with requested maximum depth considered relative to given prefix", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.keyStream( {
+					prefix: "some/key",
+					maxDepth: 2,
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.has.length( 2 );
+
+					streamed.sort();
+
+					streamed.should.eql( [
+						"some/key/without/uuid-1",
+						"some/key/without/uuid-2",
+					] );
+
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "obeys key depth instead of backend path depth which is higher due to splitting contained UUIDs into several segments", function() {
+			return adapter.write( "some/12345678-1234-1234-1234-1234567890ab", {} )
+				.then( () => adapter.write( "some/00000000-0000-0000-0000-000000000000", {} ) )
+				.then( () => adapter.write( "some/non-UUID", {} ) )
+				.then( () => adapter.write( "some/deeper/00000000-0000-0000-0000-000000000000", {} ) )
+				.then( () => new Promise( resolve => {
+					const streamed = [];
+					const stream = adapter.keyStream( {
+						prefix: "some",
+						maxDepth: 1,
+					} );
+
+					stream.should.be.instanceOf( Readable );
+					stream.on( "data", data => streamed.push( data ) );
+					stream.on( "end", () => {
+						streamed.should.be.Array().which.has.length( 3 );
+
+						streamed.sort();
+
+						streamed.should.eql( [
+							"some/00000000-0000-0000-0000-000000000000",
+							"some/12345678-1234-1234-1234-1234567890ab",
+							"some/non-UUID",
+						] );
+
+						resolve();
+					} );
+				} ) );
+		} );
+	} );
+
+	suite( "provides `valueStream()` which", function() {
+		let adapter;
+
+		setup( function() {
+			adapter = new MemoryAdapter();
+
+			return adapter.write( "some/key/without/uuid-1", { id: "1st" } )
+				.then( () => adapter.write( "some/key/without/uuid-2", { id: "2nd" } ) )
+				.then( () => adapter.write( "some/other/key/without/uuid-3", { id: "3rd" } ) )
+				.then( () => adapter.write( "some/key/with/uuid/12345678-1234-1234-1234-1234567890ab", { id: "4th" } ) )
+				.then( () => adapter.write( "some/key/with/uuid/00000000-0000-0000-0000-000000000000", { id: "5th" } ) );
+		} );
+
+		test( "is a function", function() {
+			adapter.should.have.property( "valueStream" ).which.is.a.Function();
+		} );
+
+		test( "returns a readable stream", function() {
+			return new Promise( resolve => {
+				const stream = adapter.valueStream();
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "end", resolve );
+				stream.resume();
+			} );
+		} );
+
+		test( "generates all records in selected datasource by default", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.valueStream();
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.has.length( 5 );
+
+					streamed.forEach( i => i.should.be.an.Object().which.has.size( 1 ).and.has.property( "id" ).which.is.String().and.not.empty() );
+
+					const ids = streamed.map( i => i.id );
+					ids.sort();
+					ids.should.eql( [
+						"1st",
+						"2nd",
+						"3rd",
+						"4th",
+						"5th",
+					] );
+
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates all records in selected datasource with key matching some selected prefix", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.valueStream( {
+					prefix: "some/key/without",
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.has.length( 2 );
+
+					streamed.forEach( i => i.should.be.an.Object().which.has.size( 1 ).and.has.property( "id" ).which.is.String().and.not.empty() );
+
+					const ids = streamed.map( i => i.id );
+					ids.sort();
+					ids.should.eql( [
+						"1st",
+						"2nd",
+					] );
+
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates no record if prefix doesn't match key of any folder or single record in backend", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.valueStream( {
+					prefix: "some/missing/key",
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.is.empty();
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates no record if prefix partially matching key of some folder in backend, only", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.valueStream( {
+					prefix: "some/key/wit",
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.is.empty();
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates record exactly matching key used as prefix, only", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.valueStream( {
+					prefix: "some/key/without/uuid-1",
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.has.length( 1 );
+					streamed[0].should.be.Object().which.has.size( 1 ).and.has.property( "id" ).which.is.a.String().and.equal( "1st" );
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates all records in selected datasource up to some requested maximum depth", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.valueStream( {
+					maxDepth: 4,
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.has.length( 2 );
+
+					streamed.forEach( i => i.should.be.an.Object().which.has.size( 1 ).and.has.property( "id" ).which.is.String().and.not.empty() );
+
+					const ids = streamed.map( i => i.id );
+					ids.sort();
+					ids.should.eql( [
+						"1st",
+						"2nd",
+					] );
+
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "generates all records in selected datasource with requested maximum depth considered relative to given prefix of keys", function() {
+			return new Promise( resolve => {
+				const streamed = [];
+				const stream = adapter.valueStream( {
+					prefix: "some/key",
+					maxDepth: 2,
+				} );
+
+				stream.should.be.instanceOf( Readable );
+				stream.on( "data", data => streamed.push( data ) );
+				stream.on( "end", () => {
+					streamed.should.be.Array().which.has.length( 2 );
+
+					streamed.forEach( i => i.should.be.an.Object().which.has.size( 1 ).and.has.property( "id" ).which.is.String().and.not.empty() );
+
+					const ids = streamed.map( i => i.id );
+					ids.sort();
+					ids.should.eql( [
+						"1st",
+						"2nd",
+					] );
+
+					resolve();
+				} );
+			} );
+		} );
+
+		test( "obeys key depth instead of backend path depth which is higher due to splitting contained UUIDs into several segments", function() {
+			return adapter.write( "some/12345678-1234-1234-1234-1234567890ab", { id: "6th" } )
+				.then( () => adapter.write( "some/00000000-0000-0000-0000-000000000000", { id: "7th" } ) )
+				.then( () => adapter.write( "some/non-UUID", { id: "8th" } ) )
+				.then( () => adapter.write( "some/deeper/00000000-0000-0000-0000-000000000000", { id: "9th" } ) )
+				.then( () => new Promise( resolve => {
+					const streamed = [];
+					const stream = adapter.valueStream( {
+						prefix: "some",
+						maxDepth: 1,
+					} );
+
+					stream.should.be.instanceOf( Readable );
+					stream.on( "data", data => streamed.push( data ) );
+					stream.on( "end", () => {
+						streamed.should.be.Array().which.has.length( 3 );
+
+						streamed.forEach( i => i.should.be.an.Object().which.has.size( 1 ).and.has.property( "id" ).which.is.String().and.not.empty() );
+
+						const ids = streamed.map( i => i.id );
+						ids.sort();
+						ids.should.eql( [
+							"6th",
+							"7th",
+							"8th",
+						] );
+
+						resolve();
+					} );
+				} ) );
+		} );
 	} );
 } );

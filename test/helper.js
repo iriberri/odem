@@ -28,26 +28,28 @@
 
 "use strict";
 
-const Compiler = require( "./compiler" );
-const Model = require( "./base" );
-const ModelAttributeTypes = require( "./type" );
+module.exports = Object.seal( {
 
-
-/**
- * Compiles provided schema into model class derived from AbstractModel or
- * some explicitly provided model class.
- *
- * @param {string} modelName name of model
- * @param {object} schema definition of model's schema
- * @param {class} customBaseClass model class inheriting from AbstractModel
- * @param {Adapter} adapter selects adapter to use on instances of resulting model by default
- * @returns {class} compiled model class
- */
-Model.define = function( modelName, schema = {}, customBaseClass = undefined, adapter = null ) {
-	return Compiler( modelName, schema, customBaseClass, adapter );
-};
-
-module.exports = {
-	Model,
-	ModelAttributeTypes,
-};
+	allTypesOfData: function() {
+		return [
+			undefined,
+			null,
+			false,
+			true,
+			{},
+			{ property: "value" },
+			[ "item", "item" ],
+			"",
+			"hello world",
+			0,
+			NaN,
+			-Infinity,
+			+Infinity,
+			-10.5,
+			+10.5,
+			() => {},
+			() => "",
+			function() { return ""; },
+		];
+	},
+} );
