@@ -101,11 +101,17 @@ suite( "Model Collections API", function() {
 		let adapter;
 		let Person;
 
+		suiteSetup( function() {
+			process.chdir( __dirname );
+
+			return MkDir( "..", "data" );
+		} );
+
 		setup( function() {
-			return RmDir( "../data" )
+			return Promise.resolve() // RmDir( "../data" )
 				.then( () => MkDir( "..", "data" ) )
 				.then( () => {
-					adapter = new FileAdapter( "../data" );
+					adapter = new FileAdapter( { dataSource: "../data" } );
 
 					Person = Model.define( "people", {
 						name: { type: "string" },
