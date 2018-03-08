@@ -108,8 +108,7 @@ suite( "Model Collections API", function() {
 		} );
 
 		setup( function() {
-			return Promise.resolve() // RmDir( "../data" )
-				.then( () => MkDir( "..", "data" ) )
+			return RmDir( "../data", { subsOnly: true } )
 				.then( () => {
 					adapter = new FileAdapter( { dataSource: "../data" } );
 
