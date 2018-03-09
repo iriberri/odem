@@ -56,7 +56,7 @@ suite( "IteratorStream", function() {
 		return new Promise( resolve => {
 			const stream = new IteratorStream( "Hello World!"[Symbol.iterator]() );
 
-			let exposed = [];
+			const exposed = [];
 
 			stream.on( "end", () => {
 				exposed.should.have.length( 12 );
@@ -87,7 +87,7 @@ suite( "IteratorStream", function() {
 				},
 			} );
 
-			let exposed = [];
+			const exposed = [];
 
 			stream.on( "end", () => {
 				exposed.should.have.length( 3 );

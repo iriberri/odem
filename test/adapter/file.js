@@ -258,7 +258,7 @@ suite( "FileAdapter", function() {
 				} );
 
 				stream.should.be.instanceOf( Readable );
-				stream.on( "data", data =>  streamed.push( data ) );
+				stream.on( "data", data => streamed.push( data ) );
 				stream.on( "end", () => {
 					streamed.should.be.Array().which.is.empty();
 					resolve();
@@ -274,7 +274,7 @@ suite( "FileAdapter", function() {
 				} );
 
 				stream.should.be.instanceOf( Readable );
-				stream.on( "data", data =>  streamed.push( data ) );
+				stream.on( "data", data => streamed.push( data ) );
 				stream.on( "end", () => {
 					streamed.should.be.Array().which.is.empty();
 					resolve();
@@ -290,7 +290,7 @@ suite( "FileAdapter", function() {
 				} );
 
 				stream.should.be.instanceOf( Readable );
-				stream.on( "data", data =>  streamed.push( data ) );
+				stream.on( "data", data => streamed.push( data ) );
 				stream.on( "end", () => {
 					streamed.should.be.Array().which.has.length( 1 );
 					streamed.should.eql( ["some/key/without/uuid-1"] );
@@ -742,8 +742,10 @@ suite( "FileAdapter", function() {
 		} );
 
 		test( "properly handles path names mixing segments marked with 's' and 'p'", function() {
-			FileAdapter.pathToKey( "smodel/sItem/p1/P23/p45678-1234-1234-1234-1234567890ab/Sdata" ).should.be.String().which.is.equal( "model/Item/12345678-1234-1234-1234-1234567890ab/data" );
-			FileAdapter.pathToKey( "smodel\\sItem\\p1\\P23\\p45678-1234-1234-1234-1234567890ab\\Sdata" ).should.be.String().which.is.equal( "model/Item/12345678-1234-1234-1234-1234567890ab/data" );
+			FileAdapter.pathToKey( "smodel/sItem/p1/P23/p45678-1234-1234-1234-1234567890ab/Sdata" )
+				.should.be.String().which.is.equal( "model/Item/12345678-1234-1234-1234-1234567890ab/data" );
+			FileAdapter.pathToKey( "smodel\\sItem\\p1\\P23\\p45678-1234-1234-1234-1234567890ab\\Sdata" )
+				.should.be.String().which.is.equal( "model/Item/12345678-1234-1234-1234-1234567890ab/data" );
 		} );
 	} );
 

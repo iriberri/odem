@@ -222,7 +222,7 @@ suite( "Model Attribute Type `date`", function() {
 
 		test( "rejects definition of minimum timestamp using function", function() {
 			[
-				() => {},
+				() => {}, // eslint-disable-line no-empty-function
 				() => "2015-02-25",
 				function() { return "2015-02-25"; },
 			]
@@ -327,7 +327,7 @@ suite( "Model Attribute Type `date`", function() {
 
 		test( "rejects definition of maximum timestamp using function", function() {
 			[
-				() => {},
+				() => {}, // eslint-disable-line no-empty-function
 				() => "2015-02-25",
 				function() { return "2015-02-25"; },
 			]
@@ -499,9 +499,9 @@ suite( "Model Attribute Type `date`", function() {
 		} );
 
 		test( "returns `NaN` on providing function", function() {
-			coerce( () => {} ).should.be.NaN();
+			coerce( () => {} ).should.be.NaN(); // eslint-disable-line no-empty-function
 			coerce( () => 1 + 3 ).should.be.NaN();
-			coerce( function() {} ).should.be.NaN();
+			coerce( function() {} ).should.be.NaN(); // eslint-disable-line no-empty-function
 			coerce( () => "2018-02-25" ).should.be.NaN();
 			coerce( () => "2018-02-25T08:57:00Z" ).should.be.NaN();
 			coerce( () => "14567892" ).should.be.NaN();

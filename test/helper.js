@@ -44,10 +44,10 @@ module.exports = Object.seal( {
 			0,
 			NaN,
 			-Infinity,
-			+Infinity,
+			Number( Infinity ),
 			-10.5,
 			+10.5,
-			() => {},
+			() => {}, // eslint-disable-line no-empty-function
 			() => "",
 			function() { return ""; },
 		];

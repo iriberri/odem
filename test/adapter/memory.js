@@ -265,7 +265,7 @@ suite( "MemoryAdapter", function() {
 				} );
 
 				stream.should.be.instanceOf( Readable );
-				stream.on( "data", data =>  streamed.push( data ) );
+				stream.on( "data", data => streamed.push( data ) );
 				stream.on( "end", () => {
 					streamed.should.be.Array().which.is.empty();
 					resolve();
@@ -281,7 +281,7 @@ suite( "MemoryAdapter", function() {
 				} );
 
 				stream.should.be.instanceOf( Readable );
-				stream.on( "data", data =>  streamed.push( data ) );
+				stream.on( "data", data => streamed.push( data ) );
 				stream.on( "end", () => {
 					streamed.should.be.Array().which.is.empty();
 					resolve();
@@ -297,7 +297,7 @@ suite( "MemoryAdapter", function() {
 				} );
 
 				stream.should.be.instanceOf( Readable );
-				stream.on( "data", data =>  streamed.push( data ) );
+				stream.on( "data", data => streamed.push( data ) );
 				stream.on( "end", () => {
 					streamed.should.be.Array().which.has.length( 1 );
 					streamed.should.eql( ["some/key/without/uuid-1"] );

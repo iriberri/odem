@@ -247,9 +247,9 @@ suite( "Model Attribute Type `boolean`", function() {
 		} );
 
 		test( "always returns `true` on any provided function", function() {
-			coerce( () => {} ).should.be.Boolean().which.is.true();
+			coerce( () => {} ).should.be.Boolean().which.is.true(); // eslint-disable-line no-empty-function
 			coerce( () => 1 + 3 ).should.be.Boolean().which.is.true();
-			coerce( function() {} ).should.be.Boolean().which.is.true();
+			coerce( function() {} ).should.be.Boolean().which.is.true(); // eslint-disable-line no-empty-function
 
 			coerce( Date.parse ).should.be.Boolean().which.is.true();
 		} );

@@ -376,8 +376,8 @@ suite( "Model Attribute Type `integer`", function() {
 
 		test( "returns `NaN` on providing functions", function() {
 			[
-				() => {},
-				function() {},
+				() => {}, // eslint-disable-line no-empty-function
+				function() {}, // eslint-disable-line no-empty-function
 				() => 1,
 				function() { return 1; },
 			]
@@ -442,7 +442,8 @@ suite( "Model Attribute Type `integer`", function() {
 		} );
 
 		test( "obeys step value after converting provided non-integer value to integer", function() {
-			// in following test 4.3 gets rounded to 4 first, then bound to step value 0.5 (instead of binding to step value 0.5 first, resulting in 4.5 finally rounded to 5)
+			// in following test 4.3 gets rounded to 4 first, then bound to step value 0.5
+			// (instead of binding to step value 0.5 first, resulting in 4.5 finally rounded to 5)
 			coerce( 4.3, { step: 0.5 } ).should.be.equal( 4 );
 		} );
 	} );

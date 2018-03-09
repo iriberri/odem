@@ -372,8 +372,8 @@ suite( "Model Attribute Type `number`", function() {
 
 		test( "returns `NaN` on providing functions", function() {
 			[
-				() => {},
-				function() {},
+				() => {}, // eslint-disable-line no-empty-function
+				function() {}, // eslint-disable-line no-empty-function
 				() => 1,
 				function() { return 1; },
 			]

@@ -44,10 +44,10 @@ suite( "Model compiler", function() {
 	 * @param {object<string,object>} attributes attributes' definitions to be exposed in faked model's schema
 	 * @param {object<string,function>} computeds computed attributes' definitions to be exposed in faked model's schema
 	 * @param {object<string,function[]>} hooks hook definitions to be exposed in faked model's schema
-	 * @returns {Function}
+	 * @returns {Function} class faking essential parts of Model's API
 	 */
 	function fakeModel( { attributes = {}, computeds = {}, hooks = {} } = {} ) {
-		const fake = function FakeModel() {};
+		const fake = function FakeModel() {}; // eslint-disable-line no-empty-function, func-style
 
 		Object.defineProperties( fake, {
 			schema: { value: { attributes, computeds, hooks } },
@@ -63,7 +63,7 @@ suite( "Model compiler", function() {
 	 * @param {object<string,object>} attributes attributes' definitions to be exposed in faked model's schema
 	 * @param {object<string,function>} computeds computed attributes' definitions to be exposed in faked model's schema
 	 * @param {object<string,function[]>} hooks hook definitions to be exposed in faked model's schema
-	 * @returns {Function}
+	 * @returns {object} instance imitating essential parts of a Model's item's API
 	 */
 	function fakeModelInstance( { properties = {}, attributes = {}, computeds = {}, hooks = {} } = {} ) {
 		const Fake = fakeModel( { attributes, computeds, hooks } );
@@ -132,7 +132,7 @@ suite( "Model compiler", function() {
 			( () => Compiler( "name", 0 ) ).should.throw();
 			( () => Compiler( "name", [] ) ).should.throw();
 			( () => Compiler( "name", [{}] ) ).should.throw();
-			( () => Compiler( "name", () => {} ) ).should.throw();
+			( () => Compiler( "name", () => {} ) ).should.throw(); // eslint-disable-line no-empty-function
 			( () => Compiler( "name", "" ) ).should.throw();
 			( () => Compiler( "name", "schema" ) ).should.throw();
 
@@ -153,7 +153,7 @@ suite( "Model compiler", function() {
 			( () => Compiler( "name", { prop: {} }, 0 ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, [] ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, [CustomBaseClass] ) ).should.throw();
-			( () => Compiler( "name", { prop: {} }, () => {} ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, () => {} ) ).should.throw(); // eslint-disable-line no-empty-function
 			( () => Compiler( "name", { prop: {} }, () => CustomBaseClass ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, {} ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, { base: CustomBaseClass } ) ).should.throw();
@@ -177,7 +177,7 @@ suite( "Model compiler", function() {
 			( () => Compiler( "name", { prop: {} }, null, 0 ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, null, [] ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, null, [CustomBaseClass] ) ).should.throw();
-			( () => Compiler( "name", { prop: {} }, null, () => {} ) ).should.throw();
+			( () => Compiler( "name", { prop: {} }, null, () => {} ) ).should.throw(); // eslint-disable-line no-empty-function
 			( () => Compiler( "name", { prop: {} }, null, () => CustomBaseClass ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, null, {} ) ).should.throw();
 			( () => Compiler( "name", { prop: {} }, null, { base: CustomBaseClass } ) ).should.throw();
@@ -699,14 +699,14 @@ suite( "Model compiler", function() {
 		} );
 
 		test( "returns non-empty function on non-empty definition adjusting defined properties in provided context, only", function() {
-			let attributes = { name: { type: "string" } };
-			let coercer = compileCoercion( attributes );
+			const attributes = { name: { type: "string" } };
+			const coercer = compileCoercion( attributes );
 
 			coercer.should.be.Function().which.has.length( 0 );
 			coercer.should.throw();
 
-			let item = fakeModelInstance( { properties: { name: "John Doe", age: "42", active: 1 }, attributes } );
-			let coerced = coercer.bind( item, attributes )();
+			const item = fakeModelInstance( { properties: { name: "John Doe", age: "42", active: 1 }, attributes } );
+			const coerced = coercer.bind( item, attributes )();
 			Should.not.exist( coerced );
 			item.properties.should.have.size( 3 );
 			item.properties.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
@@ -993,19 +993,19 @@ suite( "Model compiler", function() {
 
 		test( "returns non-empty object listing entry for every computed attribute in provided definition", function() {
 			const computeds = {
-				name: function( value ) {
-					if ( value === undefined ) {
+				name: function( ...args ) { // eslint-disable-line consistent-return
+					if ( args.length === 0 ) {
 						return this.properties.name.toUpperCase();
 					}
 
-					this.properties.name = value;
+					this.properties.name = args[0];
 				},
-				age: function( value ) {
-					if ( value === undefined ) {
+				age: function( ...args ) { // eslint-disable-line consistent-return
+					if ( args.length === 0 ) {
 						return this.properties.age * 2;
 					}
 
-					this.properties.age = value;
+					this.properties.age = args[0];
 				}
 			};
 			const properties = { name: "Jane Doe", age: 23 };

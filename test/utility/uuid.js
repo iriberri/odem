@@ -82,7 +82,7 @@ suite( "UUIDv4 generator", function() {
 		Uuid.isUUID( [] ).should.be.Boolean().which.is.false();
 		Uuid.isUUID( {} ).should.be.Boolean().which.is.false();
 		Uuid.isUUID( { uuid: "01234567-89ab-cdef-fedc-ba9876543210" } ).should.be.Boolean().which.is.false();
-		Uuid.isUUID( () => {} ).should.be.Boolean().which.is.false();
+		Uuid.isUUID( () => {} ).should.be.Boolean().which.is.false(); // eslint-disable-line no-empty-function
 		Uuid.isUUID( () => "01234567-89ab-cdef-fedc-ba9876543210" ).should.be.Boolean().which.is.false();
 		Uuid.isUUID( new Set() ).should.be.Boolean().which.is.false();
 

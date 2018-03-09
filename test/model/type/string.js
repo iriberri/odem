@@ -280,9 +280,9 @@ suite( "Model Attribute Type `string`", function() {
 		} );
 
 		test( "returns code of a provided function - if available - as string", function() {
-			coerce( () => {} ).should.be.String();
+			coerce( () => {} ).should.be.String(); // eslint-disable-line no-empty-function
 			coerce( () => 1 + 3 ).should.be.String().and.match( /1 \+ 3/ );
-			coerce( function() {} ).should.be.String();
+			coerce( function() {} ).should.be.String(); // eslint-disable-line no-empty-function
 
 			coerce( Date.parse ).should.be.String().and.match( /native/ );
 		} );
@@ -337,6 +337,7 @@ suite( "Model Attribute Type `string`", function() {
 		test( "converts characters to upper case obeying single locale provided in definition", function() {
 			coerce( " some string ", { upperCase: true } ).should.be.equal( " SOME STRING " );
 			coerce( " SOME STRİNG ", { upperCase: true } ).should.be.equal( " SOME STRİNG " );
+
 			/* not yet supported by NodeJS as of v8.x: */
 			// coerce( " some string ", { upperCase: "tr" } ).should.be.equal( " SOME STRİNG " );
 			coerce( " SOME STRİNG ", { upperCase: "tr" } ).should.be.equal( " SOME STRİNG " );
@@ -354,6 +355,7 @@ suite( "Model Attribute Type `string`", function() {
 		test( "converts characters to lower case obeying single locale provided in definition", function() {
 			coerce( " SOME STRING ", { lowerCase: true } ).should.be.equal( " some string " );
 			coerce( " some string ", { lowerCase: true } ).should.be.equal( " some string " );
+
 			/* not yet supported by NodeJS as of v8.x: */
 			// coerce( " SOME STRING ", { lowerCase: "tr" } ).should.be.equal( " some strıng " );
 			coerce( " some strıng ", { lowerCase: "tr" } ).should.be.equal( " some strıng " );

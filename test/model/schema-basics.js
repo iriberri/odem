@@ -51,7 +51,7 @@ suite( "Models API", function() {
 			( () => Model.define( 0.234 ) ).should.throw( TypeError );
 			( () => Model.define( {} ) ).should.throw( TypeError );
 			( () => Model.define( [] ) ).should.throw( TypeError );
-			( () => Model.define( () => {} ) ).should.throw( TypeError );
+			( () => Model.define( () => {} ) ).should.throw( TypeError ); // eslint-disable-line no-empty-function
 			( () => Model.define( "" ) ).should.throw( TypeError );
 
 			const model = Model.define( "sOmeThingVeRyaRBiTrarY" );
@@ -78,10 +78,8 @@ suite( "Models API", function() {
 		} );
 
 		test( "requires given model class for deriving new one from to inherit from AbstractModel", function() {
-			// eslint-disable-next-line require-jsdoc
-			function OldStyle() {}
-			// eslint-disable-next-line require-jsdoc
-			class NewStyle {}
+			function OldStyle() {} // eslint-disable-line no-empty-function, require-jsdoc
+			class NewStyle {} // eslint-disable-line require-jsdoc
 
 			( () => Model.define( "Item", {}, OldStyle ) ).should.throw();
 			( () => Model.define( "Item", {}, NewStyle ) ).should.throw();
