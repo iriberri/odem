@@ -30,6 +30,6 @@
   "dependencies": {
     "file-essentials": "0.*",
     "object-monitor": "0.*",
-    "promise-essentials": "0.0.8"
+    "promise-essentials": "0.*"
   }
 }
