@@ -9,9 +9,9 @@ MIT
 ## Usage
 
 ```javascript
-const { Model } = require( "hitchy-odem" );
+const { Model, FileAdapter } = require( "hitchy-odem" );
 
-// TODO: configure adapter used to persistently store objects
+const fileBackend = new FileAdapter( "../my-data-store" );
 
 const User = Model.define( "user", {
 	// regular attributes
@@ -46,21 +46,27 @@ const User = Model.define( "user", {
 			item.secret = createHash( item.secret );
 		} 
 	]
-} );
+}, { adapter: fileBackend } );
 
 // static methods
 User.create = function( name, secret ) {
-	const user = new User( { name, secret, level: 0 } );
+	const user = new User();
+	
+	user.name = name;
+	user.secret = secret;
+	user.level = 0;
 
-	user.save();
-
-	return user;
+	return user.save();
 };
 
 
-const user = User.create();
-user.level = 3;
-user.save();
-
-User.find( "level", 3 );
+User.create( "John Doe", "very-secret" )
+	.then( user => {
+		user.level = 3;
+		return user.save();
+	} )
+	.then( () => User.findByAttribute( "level", 3 ) )
+	.then( list => {
+		// list[0].uuid === user.uuid
+	} );
 ```
