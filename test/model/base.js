@@ -106,7 +106,9 @@ suite( "Abstract Model", function() {
 
 		instance.should.have.property( "load" ).which.is.a.Function().of.length( 0 );
 		instance.should.have.property( "save" ).which.is.a.Function().of.length( 0 );
+		instance.should.have.property( "remove" ).which.is.a.Function().of.length( 0 );
 		instance.should.have.property( "validate" ).which.is.a.Function().of.length( 0 );
+		instance.should.have.property( "toObject" ).which.is.a.Function().of.length( 0 );
 	} );
 
 	test( "exposes class/static properties of Model API", function() {
@@ -114,7 +116,8 @@ suite( "Abstract Model", function() {
 	} );
 
 	test( "exposes class/static methods of Model API", function() {
-		Model.should.have.property( "find" ).which.is.a.Function().of.length( 1 );
+		Model.should.have.property( "keyToUuid" ).which.is.a.Function().of.length( 1 );
+		Model.should.have.property( "keyToModelName" ).which.is.a.Function().of.length( 1 );
 	} );
 
 	test( "exposes context of monitoring properties for changes", function() {
