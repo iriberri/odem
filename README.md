@@ -38,7 +38,7 @@ const User = Model.define( "user", {
 	},
 	
 	// computed properties
-	hasLoggedInBefore: item => item.lastLogin !== null,
+	hasLoggedInBefore: item => item.lastLogin != null,
 
 	// life cycle hooks
 	onSaved: [

@@ -145,7 +145,9 @@ suite( "Model Attribute Type `integer`", function() {
 		} );
 
 		test( "validates optionally given limits on minimum or maximum value", function() {
-			checkDefinition( { min: null } ).should.not.be.empty();
+			checkDefinition( { min: undefined } ).should.be.empty();
+			checkDefinition( { min: null } ).should.be.empty();
+
 			checkDefinition( { min: false } ).should.not.be.empty();
 			checkDefinition( { min: true } ).should.not.be.empty();
 			checkDefinition( { min: "" } ).should.not.be.empty();
@@ -158,7 +160,9 @@ suite( "Model Attribute Type `integer`", function() {
 			checkDefinition( { min: -1 } ).should.be.empty();
 			checkDefinition( { min: 0 } ).should.be.empty();
 
-			checkDefinition( { max: null } ).should.not.be.empty();
+			checkDefinition( { max: undefined } ).should.be.empty();
+			checkDefinition( { max: null } ).should.be.empty();
+
 			checkDefinition( { max: false } ).should.not.be.empty();
 			checkDefinition( { max: true } ).should.not.be.empty();
 			checkDefinition( { max: "" } ).should.not.be.empty();
@@ -194,8 +198,8 @@ suite( "Model Attribute Type `integer`", function() {
 
 		test( "validates optionally given step value", function() {
 			checkDefinition( { step: undefined } ).should.be.empty();
+			checkDefinition( { step: null } ).should.be.empty();
 
-			checkDefinition( { step: null } ).should.not.be.empty();
 			checkDefinition( { step: false } ).should.not.be.empty();
 			checkDefinition( { step: true } ).should.not.be.empty();
 			checkDefinition( { step: "" } ).should.not.be.empty();

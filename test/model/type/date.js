@@ -188,8 +188,8 @@ suite( "Model Attribute Type `date`", function() {
 			checkDefinition( { min: true } ).should.not.be.empty();
 		} );
 
-		test( "rejects definition of minimum timestamp using `null`", function() {
-			checkDefinition( { min: null } ).should.not.be.empty();
+		test( "ignores definition of minimum timestamp using `null`", function() {
+			checkDefinition( { min: null } ).should.be.empty();
 		} );
 
 		test( "ignores definition of minimum timestamp using `undefined`", function() {
@@ -293,8 +293,8 @@ suite( "Model Attribute Type `date`", function() {
 			checkDefinition( { max: true } ).should.not.be.empty();
 		} );
 
-		test( "rejects definition of maximum timestamp using `null`", function() {
-			checkDefinition( { max: null } ).should.not.be.empty();
+		test( "ignores definition of maximum timestamp using `null`", function() {
+			checkDefinition( { max: null } ).should.be.empty();
 		} );
 
 		test( "ignores definition of maximum timestamp using `undefined`", function() {
@@ -373,8 +373,8 @@ suite( "Model Attribute Type `date`", function() {
 
 		test( "validates optionally given step value", function() {
 			checkDefinition( { step: undefined } ).should.be.empty();
+			checkDefinition( { step: null } ).should.be.empty();
 
-			checkDefinition( { step: null } ).should.not.be.empty();
 			checkDefinition( { step: false } ).should.not.be.empty();
 			checkDefinition( { step: true } ).should.not.be.empty();
 			checkDefinition( { step: "" } ).should.not.be.empty();
