@@ -4,7 +4,8 @@
   "description": "ODM API used by hitchy framework",
   "main": "index.js",
   "scripts": {
-    "test": "set NODE_ENV=test && mocha --ui=tdd test/**/*.js",
+    "test": "cross-env NODE_ENV=test mocha --ui=tdd test/**/*.js",
+    "coverage": "cross-env NODE_ENV=test nyc mocha --ui=tdd test/**/*.js",
     "style": "eslint ."
   },
   "repository": {
@@ -21,10 +22,12 @@
   },
   "homepage": "https://github.com/hitchyjs/odem#readme",
   "devDependencies": {
+    "cross-env": "^5.2.0",
     "eslint": "4.x",
     "eslint-config-cepharum": "1.x",
     "eslint-plugin-promise": "^3.6.0",
     "mocha": "^4.0.1",
+    "nyc": "^12.0.2",
     "should": "^13.1.3"
   },
   "dependencies": {
