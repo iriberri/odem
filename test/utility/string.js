@@ -40,7 +40,7 @@ suite( "Utility API for processing strings", function() {
 	} );
 
 	test( "exposes methods for converting case formats", function() {
-		API.should.be.an.Object().which.has.properties( "camelToSnake", "camelToKebap", "snakeToCamel", "snakeToKebap", "kebapToCamel", "kebapToSnake" );
+		API.should.be.an.Object().which.has.properties( "camelToSnake", "camelToKebap", "snakeToCamel", "snakeToKebap", "kebapToCamel", "kebapToPascal", "kebapToSnake" );
 	} );
 
 	test( "converts camelCase string to snake_case", function() {
@@ -84,6 +84,15 @@ suite( "Utility API for processing strings", function() {
 		API.kebapToCamel( "Some-kebap-case" ).should.be.String().which.is.equal( "SomeKebapCase" );
 		API.kebapToCamel( "ignores space but handles kebap-case" ).should.be.String().which.is.equal( "ignores space but handles kebapCase" );
 		API.kebapToCamel( "collapses--multiple-------------underscores" ).should.be.String().which.is.equal( "collapsesMultipleUnderscores" );
+	} );
+
+	test( "converts kebap-case string to PascalCase", function() {
+		API.kebapToPascal( "" ).should.be.String().which.is.empty();
+		API.kebapToPascal( "indifferent" ).should.be.String().which.is.equal( "Indifferent" );
+		API.kebapToPascal( "some-kebap-case" ).should.be.String().which.is.equal( "SomeKebapCase" );
+		API.kebapToPascal( "Some-kebap-case" ).should.be.String().which.is.equal( "SomeKebapCase" );
+		API.kebapToPascal( "does not handle spaces pretty well though also containing kebap-case" ).should.be.String().which.is.equal( "Does not handle spaces pretty well though also containing kebapCase" );
+		API.kebapToPascal( "collapses--multiple-------------underscores" ).should.be.String().which.is.equal( "CollapsesMultipleUnderscores" );
 	} );
 
 	test( "converts kebap-case string to snake_case", function() {
