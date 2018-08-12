@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "file-essentials": "0.*",
-    "object-monitor": "0.*",
+    "object-monitor": "0.0.7",
     "promise-essentials": "0.*"
   }
 }
