@@ -666,19 +666,19 @@ suite( "Model Attribute Type `string`", function() {
 
 		test( "relies on prior coercion to convert non-strings to strings, thus returning any other value as is, too", function() {
 			[
-				false,
-				true,
-				0,
-				1.5,
-				-2.5e7,
-				[],
-				[ 1, 2, 3 ],
-				{},
-				{ value: 1, flag: false },
-				() => 1,
+				[ false, "false" ],
+				[ true, "true" ],
+				[ 0, "0" ],
+				[ 1.5, "1.5" ],
+				[ -2.5e7, "-25000000" ],
+				[ [], "" ],
+				[ [ 1, 2, 3 ], "1,2,3" ],
+				[ {}, "[object Object]" ],
+				[ { value: 1, flag: false }, "[object Object]" ],
+				[ () => 1, "() => 1" ],
 			]
-				.forEach( value => {
-					serialize( value ).should.be.equal( value );
+				.forEach( ( [ raw, serialized ] ) => {
+					serialize( raw ).should.be.equal( serialized );
 				} );
 		} );
 	} );

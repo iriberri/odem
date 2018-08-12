@@ -752,63 +752,107 @@ suite( "Model compiler", function() {
 			( () => compileSerializer( { name: { type: "int" } } ) ).should.not.throw();
 		} );
 
-		test( "returns function not expecting any arguments on invocation", function() {
-			const serializer = compileSerializer( {} );
+		suite( "can be invoked with empty definition of attributes so it returns a function which", () => {
+			let serializer;
 
-			serializer.should.be.Function().which.has.length( 0 );
+			setup( () => {
+				serializer = compileSerializer( {} );
+			} );
+
+			test( "is expecting sole argument on invocation", function() {
+				serializer.should.be.Function().which.has.length( 1 );
+			} );
+
+			test( "is instantly invocable w/o any argument, though", function() {
+				serializer.should.not.throw();
+			} );
+
+			describe( "is returning empty object of serialized values when it", () => {
+				test( "is invoked w/o argument", function() {
+					serializer().should.be.Object().which.is.empty();
+				} );
+
+				test( "is invoked w/ empty object", function() {
+					serializer( {} ).should.be.Object().which.is.empty();
+				} );
+
+				test( "is invoked w/ non-empty object", function() {
+					serializer( {
+						name: "John Doe",
+						age: "23",
+					} ).should.be.Object().which.is.empty();
+				} );
+			} );
 		} );
 
-		test( "returns empty function instantly invocable w/o any particular context", function() {
-			const serializer = compileSerializer( {} );
+		suite( "can be invoked with non-empty definition of attributes so it returns a function which", () => {
+			let serializer;
 
-			serializer.should.not.throw();
-		} );
+			setup( () => {
+				serializer = compileSerializer( {
+					name: { type: "string" },
+					age: { type: "int" },
+				} );
+			} );
 
-		test( "returns empty function returning empty object of serialized values on invocation", function() {
-			const serializer = compileSerializer( {} );
+			test( "is expecting sole argument on invocation", function() {
+				serializer.should.be.Function().which.has.length( 1 );
+			} );
 
-			serializer().should.be.Object().which.is.empty();
-		} );
+			test( "is instantly invocable w/o any argument, though", function() {
+				serializer.should.not.throw();
+			} );
 
-		test( "returns non-empty function on non-empty definition which is throwing on invocation w/o context similar to Model instance", function() {
-			const definition = { name: { type: "string" }, age: { type: "int" } };
-			const serializer = compileSerializer( definition );
+			describe( "is returning non-empty object containing all defined attributes as properties with _serialized_ values when it", () => {
+				test( "is invoked w/o argument", function() {
+					serializer().should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+				} );
 
-			serializer.should.be.Function().which.has.length( 0 );
-			serializer.should.throw();
+				test( "is invoked w/ empty object", function() {
+					serializer( {} ).should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+				} );
 
-			serializer.bind( fakeModelInstance() ).should.not.throw();
-			serializer.bind( fakeModelInstance() )().should.be.Object().which.has.size( 2 );
-		} );
+				test( "is invoked w/ non-empty object providing some defined attributes, only", function() {
+					let serialized = serializer( {
+						name: 23,
+					} );
 
-		test( "returns non-empty function on non-empty definition returning object with serialized value of every defined attribute", function() {
-			let serializer = compileSerializer( { name: { type: "string" } } );
+					serialized.should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+					serialized.name.should.be.String().which.is.equal( "23" );
+					Should( serialized.age ).be.null();
 
-			serializer.should.be.Function().which.has.length( 0 );
-			serializer.should.throw();
+					serialized = serializer( {
+						age: 23,
+					} );
 
-			let serialized = serializer.bind( fakeModelInstance( { properties: { name: "John Doe", age: 42 } } ) )();
-			serialized.should.be.Object().which.has.size( 1 );
-			serialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
+					serialized.should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+					Should( serialized.name ).be.null();
+					serialized.age.should.be.Number().which.is.equal( 23 );
+				} );
 
+				test( "is invoked w/ non-empty object providing all defined attributes, only", function() {
+					const serialized = serializer( {
+						name: 23,
+						age: 23,
+					} );
 
-			serializer = compileSerializer( { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } } );
+					serialized.should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+					serialized.name.should.be.String().which.is.equal( "23" );
+					serialized.age.should.be.Number().which.is.equal( 23 );
+				} );
 
-			serialized = serializer.bind( fakeModelInstance( { properties: { name: "John Doe", age: 42, active: true } } ) )();
-			serialized.should.be.Object().which.has.size( 3 );
-			serialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
-			serialized.should.have.ownProperty( "age" ).which.is.equal( 42 );
-			serialized.should.have.ownProperty( "active" ).which.is.equal( 1 );
-		} );
+				test( "is invoked w/ non-empty object providing properties in addition to defined attributes", function() {
+					const serialized = serializer( {
+						name: 23,
+						age: 23,
+						additional: true,
+					} );
 
-		test( "returns non-empty function on non-empty definition returning serialized form of all defined attributes including those w/o value", function() {
-			const serializer = compileSerializer( { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } } );
-
-			const serialized = serializer.bind( fakeModelInstance() )();
-			serialized.should.be.Object().which.has.size( 3 );
-			serialized.should.have.ownProperty( "name" ).which.is.null();
-			serialized.should.have.ownProperty( "age" ).which.is.null();
-			serialized.should.have.ownProperty( "active" ).which.is.null();
+					serialized.should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+					serialized.name.should.be.String().which.is.equal( "23" );
+					serialized.age.should.be.Number().which.is.equal( 23 );
+				} );
+			} );
 		} );
 	} );
 
@@ -836,77 +880,116 @@ suite( "Model compiler", function() {
 			( () => compileDeserializer( { name: { type: "int" } } ) ).should.not.throw();
 		} );
 
-		test( "returns function not expecting any arguments on invocation", function() {
-			const deserializer = compileDeserializer( {} );
+		suite( "can be invoked with empty definition of attributes so it returns a function which", () => {
+			let deserializer;
 
-			deserializer.should.be.Function().which.has.length( 0 );
+			setup( () => {
+				deserializer = compileDeserializer( {} );
+			} );
+
+			test( "is expecting two arguments on invocation", function() {
+				deserializer.should.be.Function().which.has.length( 2 );
+			} );
+
+			test( "isn't instantly invocable w/o any argument", function() {
+				deserializer.should.throw();
+			} );
+
+			test( "isn't instantly invocable w/ sole argument, too", function() {
+				( () => deserializer( {} ) ).should.throw();
+			} );
+
+			test( "is instantly invocable w/ two proper arguments", function() {
+				( () => deserializer( {}, {} ) ).should.not.throw();
+			} );
+
+			describe( "is returning empty object of deserialized values when it", () => {
+				test( "is invoked w/ empty object of data and empty set attributes", function() {
+					deserializer( {}, {} ).should.be.Object().which.is.empty();
+				} );
+
+				test( "is invoked w/ non-empty object of data and empty set of attributes", function() {
+					deserializer( {
+						name: "John Doe",
+						age: "23",
+					}, {} ).should.be.Object().which.is.empty();
+				} );
+			} );
 		} );
 
-		test( "returns function expecting to be bound to some model instance or similar on invocation", function() {
-			const deserializer = compileDeserializer( {} );
+		suite( "can be invoked with non-empty definition of attributes so it returns a function which", () => {
+			let deserializer;
+			const attributes = {
+				name: { type: "string" },
+				age: { type: "int" },
+			};
 
-			deserializer.should.throw();
-			deserializer.bind( fakeModelInstance() ).should.not.throw();
-		} );
+			setup( () => {
+				deserializer = compileDeserializer( attributes );
+			} );
 
-		test( "returns empty function returning empty object of serialized values on invocation", function() {
-			const deserializer = compileDeserializer( {} );
+			test( "is expecting two arguments on invocation", function() {
+				deserializer.should.be.Function().which.has.length( 2 );
+			} );
 
-			deserializer.call( fakeModelInstance() ).should.be.Object().which.is.empty();
-		} );
+			test( "isn't instantly invocable w/o any argument", function() {
+				deserializer.should.throw();
+			} );
 
-		test( "returns non-empty function on non-empty definition which is throwing on invocation w/o context similar to Model instance", function() {
-			const attributes = { name: { type: "string" }, age: { type: "int" } };
-			const deserializer = compileDeserializer( attributes );
+			test( "isn't instantly invocable w/ sole argument, too", function() {
+				( () => deserializer( {} ) ).should.throw();
+			} );
 
-			deserializer.should.be.Function().which.has.length( 0 );
-			deserializer.should.throw();
+			test( "is instantly invocable w/ two proper arguments", function() {
+				( () => deserializer( {}, attributes ) ).should.not.throw();
+			} );
 
-			deserializer.bind( fakeModelInstance( { attributes } ) ).should.not.throw();
-			deserializer.bind( fakeModelInstance( { attributes } ) )().should.be.Object().which.has.size( 2 );
-		} );
+			describe( "is returning non-empty object containing all defined attributes as properties with _deserialized_ values when it", () => {
+				test( "is invoked w/ empty object and proper attributes definition", function() {
+					deserializer( {}, attributes ).should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+				} );
 
-		test( "returns non-empty function on non-empty definition returning object with deserialized value of every defined attribute", function() {
-			let attributes = { name: { type: "string" } };
-			let deserializer = compileDeserializer( attributes );
+				test( "is invoked w/ non-empty object providing some defined attributes, only, and proper attributes definition", function() {
+					let deserialized = deserializer( {
+						name: 23,
+					}, attributes );
 
-			deserializer.should.be.Function().which.has.length( 0 );
-			deserializer.should.throw();
+					deserialized.should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+					deserialized.name.should.be.String().which.is.equal( "23" );
+					Should( deserialized.age ).be.null();
 
-			let deserialized = deserializer.bind( fakeModelInstance( { properties: { name: "John Doe", age: 42 }, attributes } ) )();
-			deserialized.should.be.Object().which.has.size( 1 );
-			deserialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
+					deserialized = deserializer( {
+						age: 23,
+					}, attributes );
 
+					deserialized.should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+					Should( deserialized.name ).be.null();
+					deserialized.age.should.be.Number().which.is.equal( 23 );
+				} );
 
-			attributes = { name: { type: "string" }, age: { type: "int" } };
-			deserializer = compileDeserializer( attributes );
+				test( "is invoked w/ non-empty object providing all defined attributes, only, and proper attributes definition", function() {
+					const deserialized = deserializer( {
+						name: 23,
+						age: 23,
+					}, attributes );
 
-			deserialized = deserializer.bind( fakeModelInstance( { properties: { name: "John Doe", age: 42 }, attributes } ) )();
-			deserialized.should.be.Object().which.has.size( 2 );
-			deserialized.should.have.ownProperty( "name" ).which.is.equal( "John Doe" );
-			deserialized.should.have.ownProperty( "age" ).which.is.equal( 42 );
-		} );
+					deserialized.should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+					deserialized.name.should.be.String().which.is.equal( "23" );
+					deserialized.age.should.be.Number().which.is.equal( 23 );
+				} );
 
-		test( "returns function deserializing attribute's values coping w/ missing information in serialized data", function() {
-			const attributes = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
-			const deserializer = compileDeserializer( attributes );
+				test( "is invoked w/ non-empty object providing properties in addition to defined attributes and proper attributes definition", function() {
+					const deserialized = deserializer( {
+						name: 23,
+						age: 23,
+						additional: true,
+					}, attributes );
 
-			const deserialized = deserializer.bind( fakeModelInstance( { attributes } ) )();
-			deserialized.should.be.Object().which.has.size( 3 );
-			deserialized.should.have.ownProperty( "name" ).which.is.null();
-			deserialized.should.have.ownProperty( "age" ).which.is.null();
-			deserialized.should.have.ownProperty( "active" ).which.is.null();
-		} );
-
-		test( "returns function deserializing attribute's values coping w/ information in serialized data mismatching type of attribute", function() {
-			const attributes = { name: { type: "string" }, age: { type: "int" }, active: { type: "bool" } };
-			const deserializer = compileDeserializer( attributes );
-
-			const deserialized = deserializer.bind( fakeModelInstance( { properties: { name: 12345, age: "54321", active: "" }, attributes } ) )();
-			deserialized.should.be.Object().which.has.size( 3 );
-			deserialized.should.have.ownProperty( "name" ).which.is.equal( "12345" );
-			deserialized.should.have.ownProperty( "age" ).which.is.equal( 54321 );
-			deserialized.should.have.ownProperty( "active" ).which.is.false();
+					deserialized.should.be.Object().which.has.size( 2 ).and.has.properties( "name", "age" );
+					deserialized.name.should.be.String().which.is.equal( "23" );
+					deserialized.age.should.be.Number().which.is.equal( 23 );
+				} );
+			} );
 		} );
 	} );
 

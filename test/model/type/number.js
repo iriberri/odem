@@ -773,20 +773,24 @@ suite( "Model Attribute Type `number`", function() {
 
 		test( "relies on prior coercion to convert non-numbers to numbers, thus returning any other value as is, too", function() {
 			[
-				false,
-				true,
-				[],
-				[ 1, 2, 3 ],
-				{},
-				{ value: 1, flag: false },
-				() => 1,
-				"",
-				"abc",
-				"\u00a0",
-				"\x00\x01\x02\x1b\x00",
+				[ false, NaN ],
+				[ true, NaN ],
+				[ [], NaN ],
+				[ [ 1, 2, 3 ], 1 ],
+				[ {}, NaN ],
+				[ { value: 1, flag: false }, NaN ],
+				[ () => 1, NaN ],
+				[ "", NaN ],
+				[ "abc", NaN ],
+				[ "\u00a0", NaN ],
+				[ "\x00\x01\x02\x1b\x00", NaN ],
 			]
-				.forEach( value => {
-					serialize( value ).should.be.equal( value );
+				.forEach( ( [ raw, serialized ] ) => {
+					if ( isNaN( serialized ) ) {
+						serialize( raw ).should.be.NaN();
+					} else {
+						serialize( raw ).should.be.equal( serialized );
+					}
 				} );
 		} );
 	} );
