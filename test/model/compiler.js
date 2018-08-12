@@ -261,7 +261,7 @@ suite( "Model compiler", function() {
 				boss.adapter.should.be.equal( adapter );
 			} );
 
-			test( "can be instantiated, saved and read back", () => {
+			test( "can be instantiated with instances suitable for validating properties, saving them to and reading them from a storage", () => {
 				const storage = new MemoryAdapter();
 				const MyModel = Compiler( "MyModel", {
 					name: {},
