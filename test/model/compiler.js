@@ -260,6 +260,113 @@ suite( "Model compiler", function() {
 
 				boss.adapter.should.be.equal( adapter );
 			} );
+
+			test( "can be instantiated, saved and read back", () => {
+				const storage = new MemoryAdapter();
+				const MyModel = Compiler( "MyModel", {
+					name: {},
+					height: { type: "integer", min: 50 },
+					weight: { type: "number", min: 10 },
+					dayOfBirth: { type: "date" },
+					isFriend: { type: "boolean" },
+				}, null, storage );
+
+				// creating new item of model
+				const freshOne = new MyModel( null, { onUnsaved: false } );
+
+				// assigning values and checking implicit coercion of values
+				freshOne.name = 5;
+				freshOne.name.should.be.String().which.is.equal( "5" );
+
+				freshOne.height = "48.6";
+				freshOne.height.should.be.Number().which.is.equal( 49 );
+
+				freshOne.weight = " 5.2 ";
+				freshOne.weight.should.be.Number().which.is.equal( 5.2 );
+
+				freshOne.dayOfBirth = "2000-09-06";
+				freshOne.dayOfBirth.should.be.Date();
+				freshOne.dayOfBirth.getFullYear().should.be.equal( 2000 );
+				freshOne.dayOfBirth.getMonth().should.be.equal( 8 ); // for counting from 0 for January
+				freshOne.dayOfBirth.getDate().should.be.equal( 6 );
+
+				freshOne.isFriend = 1;
+				freshOne.isFriend.should.be.Boolean().which.is.true();
+
+				Should( freshOne.uuid ).be.null();
+
+				// try saving w/ partially invalid property values
+				return freshOne.save().should.be.Promise().which.is.rejected()
+					.then( () => {
+						Should( freshOne.uuid ).be.null();
+
+						// check validation explicitly
+						return freshOne.validate().should.be.Promise().which.is.resolvedWith( [
+							new Error( ["height is below required minimum"] ),
+							new Error( ["weight is below required minimum"] ),
+						] );
+					} )
+					.then( () => {
+						// adjust values (no warning or exception here due to `onUnsaved` set false in c'tor before)
+						freshOne.height = 50;
+						freshOne.weight = 10.8;
+
+						Should( freshOne.uuid ).be.null();
+
+						// try saving w/ fixed values again
+						return freshOne.save().should.be.Promise().which.is.resolved();
+					} )
+					.then( () => {
+						Should( freshOne.uuid ).not.be.null();
+
+						// check validation explicitly, again
+						return freshOne.validate().should.be.Promise().which.is.resolvedWith( [] );
+					} )
+					.then( () => {
+						// check record serialization by reading record from backend directly
+						return storage.read( freshOne.dataKey.replace( /%u/g, freshOne.uuid ) )
+							.then( record => {
+								record.should.be.Object();
+								record.should.have.property( "name" ).which.is.a.String().and.equal( "5" );
+								record.should.have.property( "height" ).which.is.a.Number().and.equal( 50 );
+								record.should.have.property( "weight" ).which.is.a.Number().and.equal( 10.8 );
+								record.should.have.property( "dayOfBirth" ).which.is.a.String().and.match( /^2000-09-06(?:T00:00:00)/ );
+								record.should.have.property( "isFriend" ).which.is.a.Number().and.equal( 1 );
+							} );
+					} )
+					.then( () => {
+						// adjust record in storage
+						return storage.write( freshOne.dataKey.replace( /%u/g, freshOne.uuid ), {
+							name: "Jane Doe",
+							height: "46.4",
+							weight: "2.854",
+							dayOfBirth: "2004-02-07",
+							isFriend: null,
+						} );
+					} )
+					.then( () => {
+						// create another instance reading from that record (testing deserializer)
+						const copy = new MyModel( freshOne.uuid );
+
+						return copy.load()
+							.then( () => {
+								copy.name.should.be.String().which.is.equal( "Jane Doe" );
+								copy.height.should.be.Number().which.is.equal( 46 );
+								copy.weight.should.be.Number().which.is.equal( 2.854 );
+								copy.dayOfBirth.should.be.Date();
+								copy.dayOfBirth.getFullYear().should.be.equal( 2004 );
+								copy.dayOfBirth.getMonth().should.be.equal( 1 ); // for counting from 0 for January
+								copy.dayOfBirth.getDate().should.be.equal( 7 );
+								Should( copy.isFriend ).be.null();
+
+								// validate loaded record again (failing again)
+								return copy.validate().should.be.Promise().which.is.resolvedWith( [
+									new Error( ["height is below required minimum"] ),
+									new Error( ["weight is below required minimum"] ),
+								] );
+							} );
+					} );
+			} );
 		} );
 	} );
 
