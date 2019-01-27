@@ -35,7 +35,7 @@ const Utilities = require( "./lib/utility" );
 const { Model } = Models;
 const { Adapter, MemoryAdapter } = Adapters;
 
-const { String: { kebapToPascal } } = Utilities;
+const { String: { kebabToPascal } } = Utilities;
 const Log = require( "debug" )( "odem" );
 
 
@@ -67,7 +67,7 @@ module.exports = Object.assign( {},
 				const name = modelNames[i];
 				const definition = models[name] || {};
 
-				const modelName = definition.name || kebapToPascal( name.toLocaleLowerCase() );
+				const modelName = definition.name || kebabToPascal( name.toLocaleLowerCase() );
 
 				const schema = {};
 

@@ -40,7 +40,7 @@ suite( "Utility API for processing strings", function() {
 	} );
 
 	test( "exposes methods for converting case formats", function() {
-		API.should.be.an.Object().which.has.properties( "camelToSnake", "camelToKebap", "snakeToCamel", "snakeToKebap", "kebapToCamel", "kebapToPascal", "kebapToSnake" );
+		API.should.be.an.Object().which.has.properties( "camelToSnake", "camelToKebab", "snakeToCamel", "snakeToKebab", "kebabToCamel", "kebabToPascal", "kebabToSnake" );
 	} );
 
 	test( "converts camelCase string to snake_case", function() {
@@ -51,12 +51,12 @@ suite( "Utility API for processing strings", function() {
 		API.camelToSnake( "ignores space but handles camelCase" ).should.be.String().which.is.equal( "ignores space but handles camel_case" );
 	} );
 
-	test( "converts camelCase string to kebap-case", function() {
-		API.camelToKebap( "" ).should.be.String().which.is.empty();
-		API.camelToKebap( "indifferent" ).should.be.String().which.is.equal( "indifferent" );
-		API.camelToKebap( "someCamelCase" ).should.be.String().which.is.equal( "some-camel-case" );
-		API.camelToKebap( "SomeCamelCase" ).should.be.String().which.is.equal( "Some-camel-case" );
-		API.camelToKebap( "ignores space but handles camelCase" ).should.be.String().which.is.equal( "ignores space but handles camel-case" );
+	test( "converts camelCase string to kebab-case", function() {
+		API.camelToKebab( "" ).should.be.String().which.is.empty();
+		API.camelToKebab( "indifferent" ).should.be.String().which.is.equal( "indifferent" );
+		API.camelToKebab( "someCamelCase" ).should.be.String().which.is.equal( "some-camel-case" );
+		API.camelToKebab( "SomeCamelCase" ).should.be.String().which.is.equal( "Some-camel-case" );
+		API.camelToKebab( "ignores space but handles camelCase" ).should.be.String().which.is.equal( "ignores space but handles camel-case" );
 	} );
 
 	test( "converts snake_case string to camelCase", function() {
@@ -68,39 +68,39 @@ suite( "Utility API for processing strings", function() {
 		API.snakeToCamel( "collapses__multiple_____________underscores" ).should.be.String().which.is.equal( "collapsesMultipleUnderscores" );
 	} );
 
-	test( "converts snake_case string to kebap-case", function() {
-		API.snakeToKebap( "" ).should.be.String().which.is.empty();
-		API.snakeToKebap( "indifferent" ).should.be.String().which.is.equal( "indifferent" );
-		API.snakeToKebap( "some_snake_case" ).should.be.String().which.is.equal( "some-snake-case" );
-		API.snakeToKebap( "Some_snake_case" ).should.be.String().which.is.equal( "Some-snake-case" );
-		API.snakeToKebap( "ignores space but handles snake_case" ).should.be.String().which.is.equal( "ignores space but handles snake-case" );
-		API.snakeToKebap( "collapses__multiple_____________underscores" ).should.be.String().which.is.equal( "collapses-multiple-underscores" );
+	test( "converts snake_case string to kebab-case", function() {
+		API.snakeToKebab( "" ).should.be.String().which.is.empty();
+		API.snakeToKebab( "indifferent" ).should.be.String().which.is.equal( "indifferent" );
+		API.snakeToKebab( "some_snake_case" ).should.be.String().which.is.equal( "some-snake-case" );
+		API.snakeToKebab( "Some_snake_case" ).should.be.String().which.is.equal( "Some-snake-case" );
+		API.snakeToKebab( "ignores space but handles snake_case" ).should.be.String().which.is.equal( "ignores space but handles snake-case" );
+		API.snakeToKebab( "collapses__multiple_____________underscores" ).should.be.String().which.is.equal( "collapses-multiple-underscores" );
 	} );
 
-	test( "converts kebap-case string to camelCase", function() {
-		API.kebapToCamel( "" ).should.be.String().which.is.empty();
-		API.kebapToCamel( "indifferent" ).should.be.String().which.is.equal( "indifferent" );
-		API.kebapToCamel( "some-kebap-case" ).should.be.String().which.is.equal( "someKebapCase" );
-		API.kebapToCamel( "Some-kebap-case" ).should.be.String().which.is.equal( "SomeKebapCase" );
-		API.kebapToCamel( "ignores space but handles kebap-case" ).should.be.String().which.is.equal( "ignores space but handles kebapCase" );
-		API.kebapToCamel( "collapses--multiple-------------underscores" ).should.be.String().which.is.equal( "collapsesMultipleUnderscores" );
+	test( "converts kebab-case string to camelCase", function() {
+		API.kebabToCamel( "" ).should.be.String().which.is.empty();
+		API.kebabToCamel( "indifferent" ).should.be.String().which.is.equal( "indifferent" );
+		API.kebabToCamel( "some-kebab-case" ).should.be.String().which.is.equal( "someKebabCase" );
+		API.kebabToCamel( "Some-kebab-case" ).should.be.String().which.is.equal( "SomeKebabCase" );
+		API.kebabToCamel( "ignores space but handles kebab-case" ).should.be.String().which.is.equal( "ignores space but handles kebabCase" );
+		API.kebabToCamel( "collapses--multiple-------------underscores" ).should.be.String().which.is.equal( "collapsesMultipleUnderscores" );
 	} );
 
-	test( "converts kebap-case string to PascalCase", function() {
-		API.kebapToPascal( "" ).should.be.String().which.is.empty();
-		API.kebapToPascal( "indifferent" ).should.be.String().which.is.equal( "Indifferent" );
-		API.kebapToPascal( "some-kebap-case" ).should.be.String().which.is.equal( "SomeKebapCase" );
-		API.kebapToPascal( "Some-kebap-case" ).should.be.String().which.is.equal( "SomeKebapCase" );
-		API.kebapToPascal( "does not handle spaces pretty well though also containing kebap-case" ).should.be.String().which.is.equal( "Does not handle spaces pretty well though also containing kebapCase" );
-		API.kebapToPascal( "collapses--multiple-------------underscores" ).should.be.String().which.is.equal( "CollapsesMultipleUnderscores" );
+	test( "converts kebab-case string to PascalCase", function() {
+		API.kebabToPascal( "" ).should.be.String().which.is.empty();
+		API.kebabToPascal( "indifferent" ).should.be.String().which.is.equal( "Indifferent" );
+		API.kebabToPascal( "some-kebab-case" ).should.be.String().which.is.equal( "SomeKebabCase" );
+		API.kebabToPascal( "Some-kebab-case" ).should.be.String().which.is.equal( "SomeKebabCase" );
+		API.kebabToPascal( "does not handle spaces pretty well though also containing kebab-case" ).should.be.String().which.is.equal( "Does not handle spaces pretty well though also containing kebabCase" );
+		API.kebabToPascal( "collapses--multiple-------------underscores" ).should.be.String().which.is.equal( "CollapsesMultipleUnderscores" );
 	} );
 
-	test( "converts kebap-case string to snake_case", function() {
-		API.kebapToSnake( "" ).should.be.String().which.is.empty();
-		API.kebapToSnake( "indifferent" ).should.be.String().which.is.equal( "indifferent" );
-		API.kebapToSnake( "some-kebap-case" ).should.be.String().which.is.equal( "some_kebap_case" );
-		API.kebapToSnake( "Some-kebap-case" ).should.be.String().which.is.equal( "Some_kebap_case" );
-		API.kebapToSnake( "ignores space but handles kebap-case" ).should.be.String().which.is.equal( "ignores space but handles kebap_case" );
-		API.kebapToSnake( "collapses--multiple-------------underscores" ).should.be.String().which.is.equal( "collapses_multiple_underscores" );
+	test( "converts kebab-case string to snake_case", function() {
+		API.kebabToSnake( "" ).should.be.String().which.is.empty();
+		API.kebabToSnake( "indifferent" ).should.be.String().which.is.equal( "indifferent" );
+		API.kebabToSnake( "some-kebab-case" ).should.be.String().which.is.equal( "some_kebab_case" );
+		API.kebabToSnake( "Some-kebab-case" ).should.be.String().which.is.equal( "Some_kebab_case" );
+		API.kebabToSnake( "ignores space but handles kebab-case" ).should.be.String().which.is.equal( "ignores space but handles kebab_case" );
+		API.kebabToSnake( "collapses--multiple-------------underscores" ).should.be.String().which.is.equal( "collapses_multiple_underscores" );
 	} );
 } );
