@@ -26,7 +26,6 @@
  * @author: cepharum
  */
 
-"use strict";
 
 const Adapters = require( "./lib/adapter" );
 const Models = require( "./lib/model" );

@@ -26,7 +26,6 @@
  * @author: cepharum
  */
 
-"use strict";
 
 const { join } = require( "path" );
 const { Readable } = require( "stream" );

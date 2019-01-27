@@ -26,7 +26,6 @@
  * @author: cepharum
  */
 
-"use strict";
 
 module.exports = Object.seal( {
 

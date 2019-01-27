@@ -26,7 +26,6 @@
  * @author: cepharum
  */
 
-"use strict";
 
 const { suite, test } = require( "mocha" );
 const Should = require( "should" );
